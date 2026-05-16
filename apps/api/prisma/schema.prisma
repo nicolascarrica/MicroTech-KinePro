@@ -2,3 +2,220 @@
 // El proyecto arranca SIN ORM ni base de datos. Cuando definan el
 // stack de persistencia, reemplacen el contenido por el schema real
 // (o borren toda esta carpeta y elijan otro ORM).
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Asumiendo Postgres según tu contexto anterior
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS (Opciones para los campos ENUM del diagrama)
+// ==========================================
+enum RolUsuario {
+  ADMIN
+  PACIENTE
+  KINESIOLOGO
+}
+
+enum TipoPlan {
+  PARTICULAR
+  OBRA_SOCIAL
+  PREPAGA
+}
+
+enum DiaSemana {
+  LUNES
+  MARTES
+  MIERCOLES
+  JUEVES
+  VIERNES
+  SABADO
+  DOMINGO
+}
+
+enum EstadoTurno {
+  DISPONIBLE
+  RESERVADO
+  CANCELADO
+}
+
+enum EstadoReserva {
+  PENDIENTE
+  CONFIRMADA
+  CANCELADA
+  ASISTIO
+  AUSENTE
+}
+
+enum MetodoPago {
+  EFECTIVO
+  TARJETA
+  TRANSFERENCIA
+  MERCADOPAGO
+}
+
+enum EstadoPago {
+  PENDIENTE
+  COMPLETADO
+  RECHAZADO
+  REEMBOLSADO
+}
+
+enum TipoNotificacion {
+  RECORDATORIO
+  CANCELACION_TURNO
+  PROMOCION
+  INFORMATIVA
+}
+
+enum CanalNotificacion {
+  EMAIL
+  WHATSAPP
+  SMS
+}
+
+enum EstadoNotificacion {
+  PENDIENTE
+  ENVIADA
+  ERROR
+}
+
+// ==========================================
+// MODELOS (Tablas)
+// ==========================================
+
+model Usuario {
+  id             Int        @id @default(autoincrement())
+  nombre         String
+  apellido       String
+  telefono       String?    // Opcional
+  email          String     @unique
+  contrasena     String
+  rol            RolUsuario
+  fecha_registro DateTime   @default(now()) @db.Date
+
+  // Relaciones 1 a 1 (Un usuario puede ser Paciente o Kinesiólogo)
+  paciente       Paciente?
+  kinesiologo    Kinesiologo?
+}
+
+model Paciente {
+  id               Int       @id @default(autoincrement())
+  usuario_id       Int       @unique
+  usuario          Usuario   @relation(fields: [usuario_id], references: [id])
+  tipo_plan        TipoPlan
+  fecha_nacimiento DateTime  @db.Date
+
+  // Relaciones inversas (Un paciente tiene...)
+  reservas         Reserva[]
+  lista_espera     ListaEspera[]
+  descuentos       Descuento[]
+  notificaciones   Notificacion[]
+}
+
+model Kinesiologo {
+  id         Int       @id @default(autoincrement())
+  usuario_id Int       @unique
+  usuario    Usuario   @relation(fields: [usuario_id], references: [id])
+
+  // Relaciones inversas (Un kinesiólogo tiene...)
+  actividades    Actividad[]
+}
+
+model TipoActividad {
+  id      Int               @id @default(autoincrement())
+  nombre  String
+
+  // Relaciones inversas
+  actividades Actividad[]
+}
+
+model Actividad {
+  id             Int         @id @default(autoincrement())
+  TipoActividad_id   Int
+  tipoActividad      TipoActividad   @relation(fields: [TipoActividad_id], references: [id])
+  kinesiologo_id Int
+  kinesiologo    Kinesiologo @relation(fields: [kinesiologo_id], references: [id])
+  dia_semana     DiaSemana
+  hora_inicio    DateTime    @db.Time
+  hora_fin       DateTime    @db.Time
+  fecha_desde    DateTime    @db.Date
+  fecha_hasta    DateTime?   @db.Date
+
+  // Relaciones inversas
+  turnos         Turno[]
+}
+
+model Turno {
+  id                  Int             @id @default(autoincrement())
+  actividad_id Int
+  oferta_actividad    Actividad @relation(fields: [actividad_id], references: [id])
+  fecha               DateTime        @db.Date
+  estado              EstadoTurno     @default(DISPONIBLE)
+
+  // Relaciones inversas
+  reservas            Reserva[]
+  lista_espera        ListaEspera[]
+}
+
+model Reserva {
+  id                    Int           @id @default(autoincrement())
+  turno_id              Int
+  turno                 Turno         @relation(fields: [turno_id], references: [id])
+  paciente_id           Int
+  paciente              Paciente      @relation(fields: [paciente_id], references: [id])
+  estado                EstadoReserva @default(PENDIENTE)
+  fecha_reserva         DateTime      @default(now())
+  cant_reprogramaciones Int           @default(0)
+
+  // Relaciones inversas
+  pagos                 Pago[]
+}
+
+model Pago {
+  id          Int        @id @default(autoincrement())
+  reserva_id  Int
+  reserva     Reserva    @relation(fields: [reserva_id], references: [id])
+  monto       Decimal    @db.Decimal(10, 2)
+  metodo      MetodoPago
+  estado      EstadoPago @default(PENDIENTE)
+  fecha_pago  DateTime?
+  comprobante String?    // Guardará la URL o ruta del comprobante
+}
+
+model ListaEspera {
+  id              Int      @id @default(autoincrement())
+  turno_id        Int
+  turno           Turno    @relation(fields: [turno_id], references: [id])
+  paciente_id     Int
+  paciente        Paciente @relation(fields: [paciente_id], references: [id])
+  tipo_plan       TipoPlan
+  posicion        Int
+  fecha_anotacion DateTime @default(now())
+}
+
+model Descuento {
+  id            Int      @id @default(autoincrement())
+  paciente_id   Int
+  paciente      Paciente @relation(fields: [paciente_id], references: [id])
+  porcentaje    Decimal  @db.Decimal(5, 2)
+  motivo        String
+  mes_aplicable DateTime @db.Date
+  utilizado     Boolean  @default(false)
+}
+
+model Notificacion {
+  id          Int                @id @default(autoincrement())
+  paciente_id Int
+  paciente    Paciente           @relation(fields: [paciente_id], references: [id])
+  tipo        TipoNotificacion
+  canal       CanalNotificacion
+  fecha_envio DateTime           @default(now())
+  estado      EstadoNotificacion @default(PENDIENTE)
+}
