@@ -1,0 +1,4 @@
+// Placeholder dejado por el scaffolding inicial.
+// El proyecto arranca SIN ORM ni base de datos. Cuando definan el
+// stack de persistencia, reemplacen el contenido por el schema real
+// (o borren toda esta carpeta y elijan otro ORM).

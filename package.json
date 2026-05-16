@@ -1,0 +1,17 @@
+{
+  "name": "microtech-kinepro",
+  "version": "0.1.0",
+  "private": true,
+  "description": "KinePro - Sistema de gestion de turnos del centro kinesiologico (MicroTech - Ingenieria de Software II - UNLP)",
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "install:all": "npm install --workspaces --include-workspace-root=false",
+    "dev:api": "npm --workspace apps/api run start:dev",
+    "dev:web": "npm --workspace apps/web run dev",
+    "build:api": "npm --workspace apps/api run build",
+    "build:web": "npm --workspace apps/web run build"
+  }
+}
