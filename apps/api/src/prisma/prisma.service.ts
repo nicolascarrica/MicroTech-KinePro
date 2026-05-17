@@ -1,3 +1,9 @@
-// Este archivo quedó del scaffolding inicial con Prisma y ya no se usa.
-// Borrá esta carpeta si vas a usar otro ORM.
-export {};
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+
+@Injectable()
+export class PrismaService extends PrismaClient implements OnModuleInit {
+  async onModuleInit() {
+    await this.$connect();
+  }
+}
