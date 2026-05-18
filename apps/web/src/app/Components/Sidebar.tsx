@@ -22,7 +22,7 @@ export default function Sidebar() {
           href="/pacientes" 
           className="px-4 py-3 rounded-lg text-gray-300 hover:bg-kine-blue hover:text-white transition-all duration-200 border-l-4 border-transparent hover:border-teal-accent"
         >
-          Pacientes
+          Usuarios
         </Link>
         <Link 
           href="/turnos" 

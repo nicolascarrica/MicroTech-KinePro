@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Sidebar from './Components/Sidebar';
 import Header from './Components/Header';
+import CalendarioTurnos from './Components/Calendario';
 
 
 
@@ -30,7 +31,7 @@ export default function RootLayout({
             
             {/* Contenido principal abajo */}
             <main className="flex-1 p-8 overflow-y-auto">
-              
+              <CalendarioTurnos />
               {children}
 
             </main>
