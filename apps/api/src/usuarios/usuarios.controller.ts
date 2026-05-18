@@ -1,7 +1,7 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Put, Body } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
-import { CreatePacienteDto } from './usuarios.dto';
-
+import { CreatePacienteDto, LoginDto, LogoutDto } from './usuarios.dto';
+import { UpdateContraseñaDto, UpdateUsuarioDto } from './usuarios.dto';
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
@@ -9,5 +9,26 @@ export class UsuariosController {
   @Post('registro')
   registrar(@Body() createPacienteDto: CreatePacienteDto) {
     return this.usuariosService.registrar(createPacienteDto);
+  }
+
+
+  @Post('modificacion')
+  modificar(@Body() UpdateUsuarioDto: UpdateUsuarioDto) {
+    return this.usuariosService.modificar(UpdateUsuarioDto);
+  }
+
+  @Post('inicio')
+  iniciar(@Body() LoginDto: LoginDto){
+    return this.usuariosService.iniciarsesion(LoginDto);
+  }
+
+  @Post('cierre')
+  cerrar(@Body() LogoutDto: LogoutDto){
+    return this.usuariosService.cerrarsesion(LogoutDto);
+  }
+
+  @Put('modificarcontraseña')
+  modificarContraseña(@Body() UpdateContraseñaDto: UpdateContraseñaDto){
+    return this.usuariosService.modificarcontraseña(UpdateContraseñaDto);
   }
 }

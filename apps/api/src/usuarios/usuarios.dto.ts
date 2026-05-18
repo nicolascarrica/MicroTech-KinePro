@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsString, IsEmail, IsDate, MinLength } from 'class-validator';
+import { IsString, IsEmail, IsDate, MinLength, IsInt } from 'class-validator';
 
 // 1. EL DTO BASE
 // (Solo los campos de la tabla Usuario, tanto para Paciente como Administrador)
@@ -33,4 +33,47 @@ export class CreatePacienteDto extends BaseUsuarioDto {
 
 export class CreateAdminDto extends BaseUsuarioDto {
   // Como no hereda de CreatePacienteDto no pide fecha de nacimiento.
+}
+
+export class UpdateUsuarioDto {
+  @IsInt()
+  id!: number;
+
+  @IsString()
+  nombre?: string;
+
+  @IsString()
+  apellido?: string;
+
+  @IsEmail({}, { message: 'El formato del email no es válido' })
+  email?: string;
+
+  @IsString()
+  telefono?: string;
+
+  @IsString()
+  dni?: string;
+}
+
+export class LoginDto {
+  @IsEmail({}, { message: 'El formato del email no es válido' })
+  email!: string;
+
+  @IsString()
+  contrasena!: string;
+
+}
+export class LogoutDto {
+  email!: string;
+}
+
+export class UpdateContraseñaDto {
+  @IsString()
+  contrasenaactual!: string;
+
+  @IsString()
+  contrasenanueva!: string;
+
+  @IsEmail()
+  email!: string;
 }
