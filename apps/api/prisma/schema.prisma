@@ -129,11 +129,12 @@ model Kinesiologo {
 }
 
 model TipoActividad {
-  id      Int               @id @default(autoincrement())
-  nombre  String @unique
+  id      Int     @id @default(autoincrement())
+  nombre  String  @unique
 
   // Relaciones inversas
   actividades Actividad[]
+  turnos      Turno[]
 }
 
 model Actividad {
@@ -149,20 +150,23 @@ model Actividad {
   fecha_hasta    DateTime?   @db.Date
 
   // Relaciones inversas
-  turnos         Turno[]
 }
 
 model Turno {
   id                  Int             @id @default(autoincrement())
-  actividad_id Int
-  oferta_actividad    Actividad @relation(fields: [actividad_id], references: [id])
+  tipoActividad_id    Int
+  tipoActividad       TipoActividad   @relation(fields: [tipoActividad_id], references: [id])
   fecha               DateTime        @db.Date
+  hora_inicio         DateTime        @db.Time
   estado              EstadoTurno     @default(DISPONIBLE)
-  capacidad           Int             
+  capacidad           Int
+  cantidad_inscriptos Int             @default(0)
 
   // Relaciones inversas
   reservas            Reserva[]
   lista_espera        ListaEspera[]
+
+  @@unique([fecha, hora_inicio])
 }
 
 model Reserva {

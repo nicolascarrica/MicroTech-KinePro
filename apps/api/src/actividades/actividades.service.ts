@@ -71,9 +71,7 @@ export class ActividadesService {
     //    Navegamos: TipoActividad -> Actividad (oferta) -> Turno.
     const turnosActivos = await this.prisma.turno.count({
       where: {
-        oferta_actividad: {
-          TipoActividad_id: id,
-        },
+        tipoActividad_id: id,
         estado: { not: 'CANCELADO' },
       },
     });
