@@ -1,17 +1,7 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import Sidebar from './Components/Sidebar';
-import Header from './Components/Header';
-import CalendarioTurnos from './Components/Calendario';
-import StepBanner from './Components/Inicio';
-import Inicio from './Components/Inicio';
-
-
-
-export const metadata: Metadata = {
-  title: 'KinePro - Sistema de Kinesiología',
-  description: 'Gestión de pacientes y turnos',
-};
+// app/layout.tsx
+import './globals.css'; // O donde tengas tus estilos globales
+import Sidebar from './Components/Sidebar'; // Ajustá las rutas según tus carpetas
+import Header from './Components/Header'; 
 
 export default function RootLayout({
   children,
@@ -20,27 +10,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>
-        <div className="flex min-h-screen bg-light-bg text-gray-800">
-          {/* Sidebar a la izquierda (fija) */}
-          <Sidebar />
-          
-          {/* Contenedor derecho: Columna que agrupa Header y Contenido */}
-          <div className="flex-1 flex flex-col">
-            
-            {/* Header arriba */}
-            <Header />
-            
-            {/* Contenido principal abajo */}
-            <main className="flex-1 p-8 overflow-y-auto">
-              {/* 2. Insertamos el Banner arriba del todo */}
-              <Inicio />
-              <CalendarioTurnos />
-              {children}
+      <body className="bg-slate-100 min-h-screen flex">
+        {/* Sidebar fija a la izquierda */}
+        <Sidebar />
 
-            </main>
+        {/* Contenedor principal de la derecha */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Header arriba del todo */}
+          <Header />
 
-          </div>
+          {/* Área de contenido scrollable que inyecta cada página */}
+          <main className="p-6 flex-1 overflow-y-auto">
+            {children}
+          </main>
         </div>
       </body>
     </html>

@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsString, IsEmail, IsDate, MinLength, IsInt } from 'class-validator';
 
+
 // 1. EL DTO BASE
 // (Solo los campos de la tabla Usuario, tanto para Paciente como Administrador)
 export class BaseUsuarioDto {
