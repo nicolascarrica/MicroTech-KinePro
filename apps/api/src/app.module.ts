@@ -12,6 +12,8 @@ import { AuthModule } from './auth/auth.module';
     PrismaModule,
     UsuariosModule,
     AuthModule
+    ActividadesModule,
+    TurnosModule,
   ],
   providers: [],
 })
