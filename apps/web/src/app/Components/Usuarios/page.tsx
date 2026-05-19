@@ -1,6 +1,3 @@
-// app/pacientes/page.tsx
- // Ajustá la ruta según dónde guardaste la tabla
-
 import TablaUsuarios from "../TablaUsuarios";
 
 
