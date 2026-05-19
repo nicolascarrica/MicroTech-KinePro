@@ -14,5 +14,9 @@
     "build:api": "npm --workspace apps/api run build",
     "build:web": "npm --workspace apps/web run build",
     "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "lucide-react": "^1.16.0",
+    "sonner": "^2.0.7"
   }
 }

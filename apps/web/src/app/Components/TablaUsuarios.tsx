@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import TablaGenerica, { Columna } from './TablaGenerica'; // <-- Ajustá esta ruta según dónde guardaste la tabla genérica
+import { toast } from 'sonner'; // 👈 Importamos sonner
+import { Pencil, Trash2, Loader2, AlertCircle } from 'lucide-react'; 
+import TablaGenerica, { Columna } from './TablaGenerica'; 
 
 interface Usuario {
   id: number | string; 
@@ -36,6 +38,7 @@ export default function TablaUsuarios() {
       } catch (e: any) {
         setError(e.message);
         setUsuarios([]); 
+        toast.error('Error de servidor', { description: e.message });
       } finally {
         setCargando(false); 
       }
@@ -43,19 +46,21 @@ export default function TablaUsuarios() {
     cargarUsuarios();
   }, []);
 
-
-  const handleModificar = (id?: number | string) => {
-    alert(`Abrir modal o redirigir para modificar usuario ID: ${id}`);
+  const handleModificar = (id: number | string) => {
+    toast.info(`Modificar usuario`, {
+      description: `Abriendo edición para el ID: ${id}`,
+    });
   };
 
-  const handleBaja = (id?: number | string) => {
+  const handleBaja = (id: number | string) => {
     if (confirm('¿Estás seguro de que deseas dar de baja a este usuario?')) {
-      alert(`Ejecutar PATCH/DELETE para dar de baja ID: ${id}`);
+      toast.success('Solicitud procesada', {
+        description: `El usuario con ID ${id} fue dado de baja correctamente.`,
+      });
     }
   };
 
-
-  // Acá le decimos a la Tabla Genérica qué datos mostrar y cómo renderizarlos
+  // Configuración de las columnas con los nuevos iconos vectoriales
   const columnasConfig: Columna<Usuario>[] = [
     { 
       encabezado: 'Nombre y Apellido', 
@@ -76,32 +81,46 @@ export default function TablaUsuarios() {
     { 
       encabezado: 'Acciones', 
       render: (u) => (
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => handleModificar(u.id)}
-            className="bg-slate-100 hover:bg-teal-50 text-slate-600 hover:text-teal-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border border-slate-200 hover:border-teal-200"
+            className="bg-slate-100 hover:bg-teal-50 text-slate-600 hover:text-teal-600 p-2 rounded-xl text-xs font-semibold transition-colors border border-slate-200 hover:border-teal-200 flex items-center gap-1.5"
+            title="Modificar usuario"
           >
-            ✏️ Modificar
+            <Pencil className="w-3.5 h-3.5" />
+            <span>Modificar</span>
           </button>
           <button
             onClick={() => handleBaja(u.id)}
-            className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border border-red-100"
+            className="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-xl text-xs font-semibold transition-colors border border-red-100 flex items-center gap-1.5"
+            title="Dar de baja"
           >
-            🗑️ Dar de Baja
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Dar de Baja</span>
           </button>
         </div>
       )
     }
   ];
 
+ 
   if (cargando) {
-    return <p className="text-center text-slate-500 text-sm p-8">Cargando usuarios...</p>;
+    return (
+      <div className="flex flex-col items-center justify-center p-12 gap-3 w-full bg-white rounded-2xl border border-slate-100 shadow-sm">
+        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+        <p className="text-slate-500 text-sm font-medium">Cargando listado de usuarios...</p>
+      </div>
+    );
   }
+
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-xl text-sm">
-        ⚠️ Error: {error}
+      <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-2xl text-sm flex items-center gap-3 shadow-sm">
+        <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+        <div>
+          <span className="font-bold">Hubo un problema:</span> {error}
+        </div>
       </div>
     );
   }
@@ -109,18 +128,18 @@ export default function TablaUsuarios() {
   return (
     <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       
-      {/* Encabezado de la sección (Se mantiene igual) */}
+      {/* Encabezado de la sección */}
       <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
         <div>
           <h2 className="text-xl font-bold text-slate-800">Listado de Usuarios</h2>
           <p className="text-xs text-slate-400 mt-0.5">Gestión y control de cuentas registradas</p>
         </div>
-        <span className="bg-teal-50 text-teal-700 text-xs font-bold px-3 py-1.5 rounded-full">
+        <span className="bg-teal-50 text-teal-700 text-xs font-bold px-3 py-1.5 rounded-full border border-teal-100">
           Total: {usuarios.length}
         </span>
       </div>
 
-      {/* Reemplazamos todo el HTML gigante por nuestro componente genérico */}
+      {/* Componente Genérico */}
       <TablaGenerica 
         datos={usuarios} 
         columnas={columnasConfig} 

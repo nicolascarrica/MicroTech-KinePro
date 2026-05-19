@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState } from 'react';
+import { toast } from 'sonner'; 
+import { ChevronLeft, ChevronRight, CalendarDays, Clock, CheckCircle2 } from 'lucide-react'; // 👈 Iconos vectoriales
 
-// 1. Definimos la estructura que va a tener el rango horario
 interface RangoHorario {
   desde: string;
   hasta: string;
 }
 
-// 2. Definimos la estructura del objeto final que vas a mandar a Postgres/.NET
 interface PayloadTurno {
   fecha: string;
   horaInicio: string;
@@ -22,7 +22,6 @@ export default function CalendarioTurnos() {
   const [mesActual, setMesActual] = useState<number>(hoy.getMonth());
   const [anioActual, setAnioActual] = useState<number>(hoy.getFullYear());
   
-  // Tipamos los estados que pueden empezar en null
   const [diaSeleccionado, setDiaSeleccionado] = useState<number | null>(null);
   const [rangoHorarioSeleccionado, setRangoHorarioSeleccionado] = useState<RangoHorario | null>(null);
 
@@ -42,7 +41,6 @@ export default function CalendarioTurnos() {
   const diasArr = Array.from({ length: totalDiasEnMes }, (_, i) => i + 1);
   const espaciosVacios = Array.from({ length: primerDiaDelMes }, (_, i) => i);
 
-  // Especificamos que esta función devuelve un array de RangoHorario
   const generarRangosHorarios = (): RangoHorario[] => {
     const rangos: RangoHorario[] = [];
     for (let h = HORA_INICIO_LABORAL; h < HORA_FIN_LABORAL; h++) {
@@ -81,7 +79,6 @@ export default function CalendarioTurnos() {
   };
 
   const handleConfirmarTurno = () => {
-    // Al poner esta validación, TS ya sabe que acá abajo "diaSeleccionado" y "rangoHorarioSeleccionado" NO son null
     if (!diaSeleccionado || !rangoHorarioSeleccionado) return;
 
     const mesFormateado = String(mesActual + 1).padStart(2, '0');
@@ -95,36 +92,47 @@ export default function CalendarioTurnos() {
     };
 
     console.log("Payload para el backend:", payloadTurno);
-    alert(`Turno: ${payloadTurno.fecha} de ${payloadTurno.horaInicio} a ${payloadTurno.horaFin}`);
+
+    toast.success('¡Turno reservado con éxito!', {
+      description: `Agendado para el ${diaFormateado}/${mesFormateado} de ${payloadTurno.horaInicio} a ${payloadTurno.horaFin} hs.`,
+      duration: 4000,
+    });
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">Agendar Nuevo Turno</h2>
-      
+    <div className="w-full mx-auto p-6 bg-white rounded-2xl border border-slate-100 shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         
-        {/* CALENDARIO */}
-        <div className="md:col-span-2 border-r border-gray-100 pr-0 md:pr-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-gray-700">
+        {/* SECCIÓN DEL CALENDARIO */}
+        <div className="md:col-span-2 border-b md:border-b-0 md:border-r border-slate-100 pb-6 md:pb-0 md:pr-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <CalendarDays className="w-5 h-5 text-teal-600" />
               {nombresMeses[mesActual]} {anioActual}
             </h3>
-            <div className="flex gap-2">
-              <button onClick={mesAnterior} className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                ⬅️
+            <div className="flex gap-1.5">
+              <button 
+                onClick={mesAnterior} 
+                className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 transition-colors"
+                title="Mes anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
               </button>
-              <button onClick={mesSiguiente} className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                ➡️
+              <button 
+                onClick={mesSiguiente} 
+                className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 transition-colors"
+                title="Mes siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-400 mb-2">
+          <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider">
             {diasSemana.map(d => <div key={d} className="py-2">{d}</div>)}
           </div>
 
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-1.5">
             {espaciosVacios.map(e => <div key={`vacio-${e}`} className="p-3"></div>)}
 
             {diasArr.map((dia) => {
@@ -138,12 +146,12 @@ export default function CalendarioTurnos() {
                     setDiaSeleccionado(dia);
                     setRangoHorarioSeleccionado(null);
                   }}
-                  className={`p-3 rounded-lg text-sm font-medium transition-all flex flex-col items-center justify-center
+                  className={`p-3 rounded-xl text-sm font-semibold transition-all flex flex-col items-center justify-center border aspect-square
                     ${esSeleccionado 
-                      ? 'bg-teal-600 text-white shadow-md' 
-                      : 'text-gray-700 hover:bg-teal-50 hover:text-teal-700'
+                      ? 'bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-600/10 scale-[1.02]' 
+                      : 'border-transparent text-slate-700 hover:bg-teal-50 hover:text-teal-700'
                     }
-                    ${esHoy && !esSeleccionado ? 'border border-teal-500 text-teal-600' : ''}
+                    ${esHoy && !esSeleccionado ? 'border-teal-500 bg-teal-50/40 text-teal-600' : ''}
                   `}
                 >
                   {dia}
@@ -153,28 +161,28 @@ export default function CalendarioTurnos() {
           </div>
         </div>
 
-        {/* COLUMNA DE HORARIOS */}
-        <div className="flex flex-col justify-between">
+        {/* SECCIÓN DE HORARIOS */}
+        <div className="flex flex-col justify-between h-full min-h-[380px]">
           <div>
-            <h3 className="text-lg font-bold text-gray-700 mb-4">
+            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-teal-600" />
               {diaSeleccionado 
-                ? `Horarios para el ${diaSeleccionado}/${mesActual + 1}` 
+                ? `Horarios: ${diaSeleccionado}/${mesActual + 1}` 
                 : "Selecciona un día"}
             </h3>
 
             {diaSeleccionado ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-2 max-h-[320px] overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-2 max-h-[300px] overflow-y-auto pr-1">
                 {rangosHorarios.map((rango, idx) => {
-                  // Agregamos el encadenamiento opcional (?.) para máxima seguridad en TS
                   const esHoraSeleccionada = rangoHorarioSeleccionado?.desde === rango.desde;
                   return (
                     <button
                       key={`rango-${idx}`}
                       onClick={() => setRangoHorarioSeleccionado(rango)}
-                      className={`py-2 px-3 text-center border text-sm rounded-lg font-medium transition-all
+                      className={`py-2.5 px-3 text-center border text-xs rounded-xl font-semibold transition-all
                         ${esHoraSeleccionada 
-                          ? 'border-teal-600 bg-teal-50 text-teal-700 font-bold ring-2 ring-teal-600/20' 
-                          : 'border-gray-200 text-gray-600 hover:border-teal-600 hover:text-teal-600'
+                          ? 'border-teal-600 bg-teal-50 text-teal-700 ring-2 ring-teal-600/10' 
+                          : 'border-slate-200 text-slate-600 hover:border-teal-600 hover:text-teal-600 hover:bg-slate-50/50'
                         }
                       `}
                     >
@@ -184,24 +192,26 @@ export default function CalendarioTurnos() {
                 })}
               </div>
             ) : (
-              <div className="text-sm text-gray-400 bg-gray-50 rounded-lg p-6 text-center border border-dashed border-gray-200">
-                Elige una fecha del calendario para ver los rangos de atención disponibles.
+              <div className="text-xs text-slate-400 bg-slate-50/60 rounded-2xl p-6 text-center border border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 min-h-[200px]">
+                <CalendarDays className="w-8 h-8 text-slate-300 stroke-[1.5]" />
+                <span>Elige una fecha del calendario para ver las horas de atención disponibles.</span>
               </div>
             )}
           </div>
 
-          <div className="mt-6 md:mt-0">
+          <div className="mt-6">
             <button
               onClick={handleConfirmarTurno}
               disabled={!diaSeleccionado || !rangoHorarioSeleccionado}
-              className={`w-full py-3 px-4 rounded-xl font-semibold text-sm shadow transition-all text-center
+              className={`w-full py-3 px-4 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2
                 ${diaSeleccionado && rangoHorarioSeleccionado
-                  ? 'bg-teal-600 text-white hover:bg-teal-700 cursor-pointer'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ? 'bg-teal-600 text-white hover:bg-teal-700 cursor-pointer active:scale-[0.98]'
+                  : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
                 }
               `}
             >
-              Confirmar Reserva
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Confirmar Reserva</span>
             </button>
           </div>
         </div>

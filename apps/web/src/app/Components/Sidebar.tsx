@@ -1,4 +1,4 @@
-'use client'; // 🔥 Transformamos a componente cliente para usar hooks de ruta
+'use client'; 
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation'; // Hook para saber la URL actual

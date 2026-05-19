@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner'; 
 
 export default function Inicio() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,36 +46,41 @@ export default function Inicio() {
       }
 
       if (isLogin) {
-  
         localStorage.setItem('kinepro_token', resultado.token);
         localStorage.setItem('kinepro_user', JSON.stringify(resultado.usuario));
 
-        alert(`¡Inicio de sesión exitoso! Hola de nuevo, ${resultado.usuario.nombre}.`);
+        toast.success('¡Inicio de sesión exitoso!', {
+          description: `Hola de nuevo, ${resultado.usuario.nombre}.`,
+        });
 
         setIsModalOpen(false);
 
         setTimeout(() => {
           window.location.reload();
-        }, 1000);
+        }, 1500); 
 
       } else {
-        alert('¡Registro completado con éxito! Ya podés iniciar sesión con tus credenciales.');
+        toast.success('¡Registro completado con éxito!', {
+          description: 'Ya podés iniciar sesión con tus credenciales.',
+        });
         setAuthMode('login'); 
       }
 
     } catch (error: any) {
       console.error('Error en el flujo de auth:', error.message);
-      if (isLogin) {
-        alert(`Error al iniciar sesión: ${error.message}`);
-      } else {
-        alert(`Error al crear usuario: ${error.message}`);
-      }
+      
+      toast.error(isLogin ? 'Error al iniciar sesión' : 'Error al crear usuario', {
+        description: error.message,
+        duration: 5000, 
+      });
     }
   }
+
   if (cargando || isAuthenticated) return null;
 
   return (
     <div className="mb-6 w-full">
+      {/* SECCIÓN DE BIENVENIDA Y PASOS */}
       <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div className="mb-6 border-b border-slate-100 pb-5">
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
@@ -101,7 +107,6 @@ export default function Inicio() {
           </div>
         </div>
 
-        {/* Botón de Acción */}
         <div className="flex justify-end">
           <button 
             onClick={() => { setAuthMode('login'); setIsModalOpen(true); }}
@@ -112,7 +117,7 @@ export default function Inicio() {
         </div>
       </section>
 
-     
+      {/* MODAL DE AUTENTICACIÓN */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
@@ -124,7 +129,6 @@ export default function Inicio() {
               ✕
             </button>
 
-            {/* Selector Login / Registro */} 
             <div className="flex border-b border-slate-100 mb-6">
               <button
                 type="button"
@@ -142,7 +146,6 @@ export default function Inicio() {
               </button>
             </div>
 
-            {/* Formulario */}
             <form onSubmit={manejarAuth} className="space-y-4">
               {authMode === 'register' && (
                 <div className="grid grid-cols-2 gap-4">
@@ -180,9 +183,10 @@ export default function Inicio() {
               
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+               
                 <input 
                   type="password" 
-                  name='password' 
+                  name='password'
                   required 
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" 
                   placeholder="••••••••" 

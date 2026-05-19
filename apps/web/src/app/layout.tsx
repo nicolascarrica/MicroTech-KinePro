@@ -1,7 +1,8 @@
 // app/layout.tsx
-import './globals.css'; // O donde tengas tus estilos globales
-import Sidebar from './Components/Sidebar'; // Ajustá las rutas según tus carpetas
+import './globals.css';
+import Sidebar from './Components/Sidebar';
 import Header from './Components/Header'; 
+import { Toaster } from 'sonner'; // 👈 1. Importás el Toaster
 
 export default function RootLayout({
   children,
@@ -11,19 +12,14 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className="bg-slate-100 min-h-screen flex">
-        {/* Sidebar fija a la izquierda */}
         <Sidebar />
-
-        {/* Contenedor principal de la derecha */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Header arriba del todo */}
           <Header />
-
-          {/* Área de contenido scrollable que inyecta cada página */}
           <main className="p-6 flex-1 overflow-y-auto">
             {children}
           </main>
         </div>
+        <Toaster position="top-right" richColors closeButton />
       </body>
     </html>
   );
