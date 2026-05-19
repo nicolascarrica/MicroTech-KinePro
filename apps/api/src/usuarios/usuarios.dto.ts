@@ -61,7 +61,6 @@ export class LoginDto {
 
   @IsString()
   contrasena!: string;
-
 }
 export class LogoutDto {
   email!: string;

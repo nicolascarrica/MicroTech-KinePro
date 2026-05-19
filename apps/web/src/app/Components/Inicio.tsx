@@ -1,0 +1,201 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
+export default function Inicio() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+
+  // Estados para manejar la persistencia de sesión sin errores 
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('kinepro_token');
+    setIsAuthenticated(!!token);
+    setCargando(false);
+  }, []);
+
+  async function manejarAuth(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+
+    const isLogin = authMode === 'login';
+    const url = isLogin 
+      ? `${process.env.NEXT_PUBLIC_API_URL}/auth/login` 
+      : `${process.env.NEXT_PUBLIC_API_URL}/usuarios/registro`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const resultado = await response.json();
+
+      if (!response.ok) {
+        const mensajeError = Array.isArray(resultado.message) 
+          ? resultado.message.join(', ') 
+          : resultado.message;
+        
+        throw new Error(mensajeError || 'Hubo un problema');
+      }
+
+      if (isLogin) {
+  
+        localStorage.setItem('kinepro_token', resultado.token);
+        localStorage.setItem('kinepro_user', JSON.stringify(resultado.usuario));
+
+        alert(`¡Inicio de sesión exitoso! Hola de nuevo, ${resultado.usuario.nombre}.`);
+
+        setIsModalOpen(false);
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+
+      } else {
+        alert('¡Registro completado con éxito! Ya podés iniciar sesión con tus credenciales.');
+        setAuthMode('login'); 
+      }
+
+    } catch (error: any) {
+      console.error('Error en el flujo de auth:', error.message);
+      if (isLogin) {
+        alert(`Error al iniciar sesión: ${error.message}`);
+      } else {
+        alert(`Error al crear usuario: ${error.message}`);
+      }
+    }
+  }
+  if (cargando || isAuthenticated) return null;
+
+  return (
+    <div className="mb-6 w-full">
+      <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div className="mb-6 border-b border-slate-100 pb-5">
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            ¡Te damos la bienvenida a <span className="text-teal-600">KinePro</span>! 
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Tu espacio para gestionar consultas, seguir tratamientos y agendar turnos de kinesiología de forma rápida y sencilla.
+          </p>
+        </div>
+
+        <h2 className="text-base font-bold text-slate-800 mb-4">Pasos para comenzar a atenderte:</h2>
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-start gap-3">
+            <span className="flex items-center justify-center bg-teal-50 text-teal-600 font-bold rounded-full h-8 w-8 shrink-0">1</span>
+            <p className="text-sm text-slate-600 mt-1">Iniciá sesión o registrate en la plataforma con tus datos.</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="flex items-center justify-center bg-teal-50 text-teal-600 font-bold rounded-full h-8 w-8 shrink-0">2</span>
+            <p className="text-sm text-slate-600 mt-1">Seleccioná el día disponible que mejor se adapte a tu agenda.</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="flex items-center justify-center bg-teal-50 text-teal-600 font-bold rounded-full h-8 w-8 shrink-0">3</span>
+            <p className="text-sm text-slate-600 mt-1">Confirmá tu reserva y recibí la notificación del turno.</p>
+          </div>
+        </div>
+
+        {/* Botón de Acción */}
+        <div className="flex justify-end">
+          <button 
+            onClick={() => { setAuthMode('login'); setIsModalOpen(true); }}
+            className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 py-2.5 rounded-xl transition-all shadow-sm"
+          >
+            Iniciar Sesión
+          </button>
+        </div>
+      </section>
+
+     
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+            
+            <button 
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg"
+            >
+              ✕
+            </button>
+
+            {/* Selector Login / Registro */} 
+            <div className="flex border-b border-slate-100 mb-6">
+              <button
+                type="button"
+                className={`flex-1 pb-3 text-center font-medium border-b-2 transition-all ${authMode === 'login' ? 'border-teal-600 text-teal-600' : 'border-transparent text-slate-400'}`}
+                onClick={() => setAuthMode('login')}
+              >
+                Iniciar Sesión
+              </button>
+              <button
+                type="button"
+                className={`flex-1 pb-3 text-center font-medium border-b-2 transition-all ${authMode === 'register' ? 'border-teal-600 text-teal-600' : 'border-transparent text-slate-400'}`}
+                onClick={() => setAuthMode('register')}
+              >
+                Registrarse
+              </button>
+            </div>
+
+            {/* Formulario */}
+            <form onSubmit={manejarAuth} className="space-y-4">
+              {authMode === 'register' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Nombre</label>
+                    <input type="text" name='nombre' required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="Juan" />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Apellido</label>
+                    <input type="text" name='apellido' required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="Pérez" />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">DNI</label>
+                    <input type="text" name='dni' required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="12345678" />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Teléfono</label>
+                    <input type="text" name='telefono' required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="221123456" />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Nacimiento</label>
+                    <input type="date" name='fechaNacimiento' required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+                <input type="email" name='email' required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="ejemplo@kinepro.com" />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+                <input 
+                  type="password" 
+                  name='password' 
+                  required 
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" 
+                  placeholder="••••••••" 
+                />
+              </div>
+              
+              <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-xl transition-colors mt-2">
+                {authMode === 'login' ? 'Ingresar' : 'Crear Cuenta'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
