@@ -10,16 +10,12 @@ export class ActividadesService {
   // HU: Crear actividad
   // ============================================================
   async crear(dto: CreateActividadDto) {
-    // Nota: internamente la actividad se guarda en la tabla TipoActividad
-    // (catálogo de actividades). El otro modelo "Actividad" del schema es
-    // la oferta de horario y NO se usa en ninguna HU.
-
-    // ----- Escenario 2: Creación fallida por actividad ya registrada -----
-    const yaExiste = await this.prisma.tipoActividad.findUnique({
+    const existe = await this.prisma.tipoActividad.findUnique({
       where: { nombre: dto.nombre },
     });
-    if (yaExiste) {
-      throw new BadRequestException('La actividad ya se encuentra registrada');
+
+    if (existe) {
+      throw new BadRequestException('Ya existe una actividad con ese nombre');
     }
     if (dto.precio === undefined || dto.precio === null) {
       throw new BadRequestException('El precio es obligatorio');
@@ -28,8 +24,6 @@ export class ActividadesService {
     // ----- Escenario 3: Creación fallida por precio no ingresado -----
 // (lo valida el DTO con @IsNotEmpty → "El precio es obligatorio")
 
-
-    // ----- Escenario 1: Creación exitosa -----
     await this.prisma.tipoActividad.create({
       data: {
         nombre: dto.nombre,
@@ -37,37 +31,29 @@ export class ActividadesService {
       },
     });
 
-    return { message: 'La actividad se creó con éxito' };
+    return { message: 'Actividad creada correctamente' };
   }
 
   // ============================================================
   // HU: Modificar actividad
   // ============================================================
   async modificar(id: number, dto: ModificarActividadDto) {
-    // Verificación adicional (no está en los escenarios de la HU, pero es
-    // buena práctica): si la actividad que se quiere modificar no existe,
-    // devolver 404 para evitar errores feos de Prisma.
-    const actividadActual = await this.prisma.tipoActividad.findUnique({
+    const actividad = await this.prisma.tipoActividad.findUnique({
       where: { id },
     });
-    if (!actividadActual) {
-      throw new NotFoundException('La actividad no existe');
+
+    if (!actividad) {
+      throw new NotFoundException(`La actividad con ID ${id} no existe`);
     }
 
-    // ----- Escenario 2: Modificar actividad fallido por nombre ya registrado -----
-    // (El nuevo nombre ya está siendo usado por OTRA actividad. Si el nombre
-    // coincide con el actual no hay conflicto.)
-    const conflicto = await this.prisma.tipoActividad.findUnique({
-      where: { nombre: dto.nombre },
+    const nombreTomado = await this.prisma.tipoActividad.findFirst({
+      where: { nombre: dto.nombre, NOT: { id } },
     });
-    if (conflicto && conflicto.id !== id) {
-      throw new BadRequestException('El nombre de la actividad ya se encuentra registrada');
+
+    if (nombreTomado) {
+      throw new BadRequestException('Ya existe una actividad con ese nombre');
     }
 
-// ----- Escenario 3: Modificar actividad fallido por precio no ingresado -----
-// (lo valida el DTO con @IsNotEmpty → "El precio es obligatorio")
-
-    // ----- Escenario 1: Modificar actividad exitoso -----
     await this.prisma.tipoActividad.update({
       where: { id },
       data: {
@@ -76,42 +62,23 @@ export class ActividadesService {
       },
     });
 
-    return { message: 'La actividad se modificó con éxito' };
+    return { message: 'Actividad modificada correctamente' };
   }
 
   // ============================================================
   // HU: Eliminar actividad
   // ============================================================
   async eliminar(id: number) {
-    // Verificación adicional (no está en los escenarios de la HU, pero es
-    // buena práctica): si la actividad no existe, devolver 404.
     const actividad = await this.prisma.tipoActividad.findUnique({
       where: { id },
     });
+
     if (!actividad) {
-      throw new NotFoundException('La actividad no existe');
+      throw new NotFoundException(`La actividad con ID ${id} no existe`);
     }
 
-    // ----- Escenario 2: Eliminar actividad fallido por turnos activos -----
-    // "Activo" se interpreta como cualquier estado != CANCELADO
-    // (es decir, DISPONIBLE o RESERVADO).
-    const turnosActivos = await this.prisma.turno.count({
-      where: {
-        tipoActividad_id: id,
-        estado: { not: 'CANCELADO' },
-      },
-    });
-    if (turnosActivos > 0) {
-      throw new BadRequestException(
-        'Deben reprogramarse los turnos antes de eliminar una actividad',
-      );
-    }
+    await this.prisma.tipoActividad.delete({ where: { id } });
 
-    // ----- Escenario 1: Eliminar actividad exitoso -----
-    await this.prisma.tipoActividad.delete({
-      where: { id },
-    });
-
-    return { message: 'La actividad se eliminó con éxito' };
+    return { message: 'Actividad eliminada correctamente' };
   }
 }

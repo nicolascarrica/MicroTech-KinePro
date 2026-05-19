@@ -27,7 +27,7 @@ export class AuthService {
     }
 
     // Escenario 3 y 4: Fallido por contraseña incorrecta
-    if (usuarioIngresado.contrasena !== dto.password) {
+    if (usuarioIngresado.contrasena !== dto.contrasena) {
       const nuevosIntentos = usuarioIngresado.intentosFallidos + 1;
       
       await this.prisma.usuario.update({
