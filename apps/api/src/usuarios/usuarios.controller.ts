@@ -1,4 +1,4 @@
-import { Controller, Post, Put, Body } from '@nestjs/common';
+import { Controller, Post, Put, Body, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { CreatePacienteDto, LoginDto, LogoutDto } from './usuarios.dto';
 import { UpdateContraseñaDto, UpdateUsuarioDto } from './usuarios.dto';
@@ -30,5 +30,15 @@ export class UsuariosController {
   @Put('modificarcontraseña')
   modificarContraseña(@Body() UpdateContraseñaDto: UpdateContraseñaDto){
     return this.usuariosService.modificarcontraseña(UpdateContraseñaDto);
+  }
+
+  @Get()
+  obtenerTodos() {
+    return this.usuariosService.obtenerTodos();
+  }
+
+  @Get(':id')
+  obtenerPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.usuariosService.obtenerPorId(id);
   }
 }
