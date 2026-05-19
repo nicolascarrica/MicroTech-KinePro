@@ -137,7 +137,7 @@ model Kinesiologo {
 
 model TipoActividad {
   id      Int               @id @default(autoincrement())
-  nombre  String
+  nombre  String @unique
 
   // Relaciones inversas
   actividades Actividad[]
