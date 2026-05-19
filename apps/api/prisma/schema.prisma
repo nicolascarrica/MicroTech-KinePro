@@ -129,8 +129,9 @@ model Kinesiologo {
 }
 
 model TipoActividad {
-  id      Int     @id @default(autoincrement())
-  nombre  String  @unique
+  id     Int     @id @default(autoincrement())
+  nombre String  @unique
+  precio Decimal @db.Decimal(10, 2)
 
   // Relaciones inversas
   actividades Actividad[]
