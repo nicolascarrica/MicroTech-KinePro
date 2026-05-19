@@ -60,7 +60,7 @@ export class LoginDto {
   email!: string;
 
   @IsString()
-  contrasena!: string;
+  password!: string;
 }
 export class LogoutDto {
   email!: string;

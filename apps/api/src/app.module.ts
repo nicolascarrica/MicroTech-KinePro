@@ -13,7 +13,6 @@ import { TurnosModule } from './turnos/turnos.module';
     HealthModule,
     PrismaModule,
     UsuariosModule,
-    AuthModule
     AuthModule,
     ActividadesModule,
     TurnosModule,
