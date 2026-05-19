@@ -99,6 +99,13 @@ model Usuario {
   contrasena     String
   rol            RolUsuario
   fecha_registro DateTime   @default(now()) @db.Date
+  
+  //Migrarlo a bd el campo los de abajo y hacer todo lo demas
+  intentosFallidos    Int      @default(0)
+  bloqueado           Boolean  @default(false)
+  
+  //Comment: Hacer una tabla de sesion por usuario y cada sesion tendra
+  //un intento fallido y ver si esta bloqueado o no
 
   // Relaciones 1 a 1 (Un usuario puede ser Paciente o Kinesiólogo)
   paciente       Paciente?

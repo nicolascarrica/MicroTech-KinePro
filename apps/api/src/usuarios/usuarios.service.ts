@@ -1,7 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreatePacienteDto } from './usuarios.dto';
-
+import { CreatePacienteDto, LogoutDto, LoginDto } from './usuarios.dto';
+import { UpdateUsuarioDto,UpdateContraseñaDto } from './usuarios.dto';
 @Injectable()
 export class UsuariosService {
   constructor(private prisma: PrismaService) {}
@@ -72,5 +72,204 @@ export class UsuariosService {
     });
 
     return { message: 'Registro exitoso' };
+  }
+
+  async modificar(dto: UpdateUsuarioDto){
+
+    //Escenario 2: Fallido por dato/s ya registrado/s en el sistema.
+    const emailExiste = await this.prisma.usuario.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (emailExiste) {
+      throw new BadRequestException('El email ya se encuentra registrado');
+    }
+
+    const telefonoExiste = await this.prisma.usuario.findUnique({
+      where: { telefono: dto.telefono },
+    });
+
+    if (telefonoExiste) {
+      throw new BadRequestException('El teléfono ya se encuentra registrado');
+    }
+   
+    const dniExiste = await this.prisma.usuario.findUnique ({
+      where: { dni: dto.dni },
+    });
+
+    if (dniExiste) {
+      throw new BadRequestException ('El DNI ya se encuentra registrado');
+    }
+
+    //Escenario 1: Modificacion exitosa.
+    const usuarioModificado = await this.prisma.usuario.update({
+      where: { id: dto.id }, //Esto esta mal porque significa que cualquiera
+      //puede cambiar a cualquiera ingresando un ID random. No se como arreglarlo.
+   
+      data: {
+        email: dto.email,
+        nombre: dto.nombre,
+        apellido: dto.apellido,
+        dni: dto.dni,
+        telefono: dto.telefono,
+      },
+    });
+
+    return { message: 'Modificacion de datos exitosa' };
+  }
+
+  async iniciarsesion(dto: LoginDto) {
+
+    const usuarioIngresado = await this.prisma.usuario.findUnique({
+      where: { email: dto.email },
+    });
+
+    //Escenario 2: Fallido por email inexistente
+    if (!usuarioIngresado) {
+      throw new BadRequestException('Datos incorrectos');
+    }
+
+    //Escenario 5: Fallido por cuenta bloqueada
+    if (usuarioIngresado.bloqueado) {
+      throw new BadRequestException('La cuenta fue bloqueada');
+    }
+
+    //Escenario 3 y 4: Fallido por contraseña incorrecta
+    if (usuarioIngresado.contrasena !== dto.contrasena) {
+
+      const nuevosIntentos = usuarioIngresado.intentosFallidos + 1;
+      
+      await this.prisma.usuario.update({
+        where: { id: usuarioIngresado.id },
+        data: {
+          intentosFallidos: nuevosIntentos,
+        },
+      });
+
+      if (nuevosIntentos === 3) {
+        await this.prisma.usuario.update({
+          where: { id: usuarioIngresado.id },
+          data: {
+            bloqueado: true,
+          },
+        });
+
+        throw new BadRequestException('Contraseña incorrecta. La cuenta fue bloqueada y se le envio un email al correo asociado para desbloquearla');
+        //Aca iria la accion que llama al HU desbloquear cuenta imagino.
+      }
+
+      throw new BadRequestException('Contraseña incorrecta, intente nuevamente.');
+    }
+
+    //Escenario 1: Exitoso
+    await this.prisma.usuario.update({
+      where: { id: usuarioIngresado.id },
+      data: {
+        intentosFallidos: 0,
+      },
+    });
+
+    return { message: 'Inicio de sesión exitoso' };
+    //Va algo mas? iria algo que ejecute el inicio de sesion imagino.
+  }
+   
+  //La verdad no entiendo bien este. Osea no se si asi esta bien.
+  async cerrarsesion(dto: LogoutDto) {
+
+    const usuarioLogueado = await this.prisma.usuario.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (!usuarioLogueado) {
+      throw new BadRequestException('Usuario no encontrado');
+    }
+
+    return { message: 'Sesión cerrada correctamente' };
+  }
+
+  async modificarcontraseña (dto: UpdateContraseñaDto){
+    
+    const usuarioLog = await this.prisma.usuario.findUnique({
+      where: { email: dto.email }, //Para saber que usuario quiere modificar su contraseña.
+    });
+
+    // Esto es necesario porque sino me tira error en usuarioLog mas abajo.
+    if (!usuarioLog) {
+        throw new BadRequestException('Usuario no encontrado');
+    }
+    
+    //Escenario 2: Fallido por contraseña actual incorrecta.
+    if (usuarioLog.contrasena !== dto.contrasenaactual) {
+      throw new BadRequestException('La contraseña actual es incorrecta');
+    }
+
+    //Escenaario 3: Fallido por contraseña nueva igual a la actual.
+    if (usuarioLog.contrasena === dto.contrasenanueva){
+      throw new BadRequestException('La contraseña nueva no puede ser igual a la actual');
+    }
+
+    //Escenario 4: Fallido por contraseña nueva menor a 8 caracteres.
+    if (dto.contrasenanueva.length < 8){
+      throw new BadRequestException('La contraseña debe contener mínimo 8 caracteres');
+    }
+
+    await this.prisma.usuario.update({
+      where: {email: dto.email },
+      data: {
+        contrasena:dto.contrasenanueva,
+      }
+    }); 
+
+    return { message: 'Contraseña modificada correctamente' }; 
+  }
+
+  async obtenerTodos() {
+    const usuarios = await this.prisma.usuario.findMany({
+      // Utilizo select para NO enviar la contraseña al frontend
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        email: true,
+        dni: true,
+        telefono: true,
+        rol: true,
+        fecha_registro: true,
+      },
+    });
+
+    // Escenario 2: No hay usuarios en la BD
+    if (usuarios.length === 0) {
+      return { 
+        message: 'No existen usuarios', 
+        data: [] 
+      };
+    }
+
+    // Escenario 1
+    return { data: usuarios };
+  }
+
+  // Esta HU no existe aún
+  async obtenerPorId(id: number) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: id },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        email: true,
+        dni: true,
+        telefono: true,
+        rol: true,
+        fecha_registro: true,
+      },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException(`El usuario con ID ${id} no existe`);
+    }
+
+    return { data: usuario };
   }
 }
