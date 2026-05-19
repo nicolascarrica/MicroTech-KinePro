@@ -17,3 +17,8 @@ export class CreateTurnoDto {
   @Min(1, { message: 'La capacidad debe ser mayor a 0' })
   capacidad!: number;
 }
+
+export class ListarTurnosDto {
+  @IsDateString({}, { message: 'La fecha debe estar en formato YYYY-MM-DD' })
+  fecha!: string;
+}

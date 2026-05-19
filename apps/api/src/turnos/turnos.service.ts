@@ -75,4 +75,54 @@ export class TurnosService {
 
     return { message: 'Turno creado' };
   }
+
+  // ============================================================
+  // HU: Visualizar turnos (personal)
+  // ============================================================
+
+  // Cubre Escenarios 1 y 2: devuelve la lista de turnos de la fecha
+  // (array vacío si no hay; el front muestra el mensaje correspondiente).
+  async listarPorFecha(fechaStr: string) {
+    const fecha = new Date(`${fechaStr}T00:00:00.000Z`);
+
+    const turnos = await this.prisma.turno.findMany({
+      where: { fecha },
+      include: { tipoActividad: true },
+      orderBy: { hora_inicio: 'asc' },
+    });
+
+    return turnos.map((t) => ({
+      id: t.id,
+      fecha: t.fecha,
+      hora_inicio: t.hora_inicio,
+      actividad: t.tipoActividad.nombre,
+      capacidad: t.capacidad,
+      cantidad_inscriptos: t.cantidad_inscriptos,
+      espacios_libres: t.capacidad - t.cantidad_inscriptos,
+      estado: t.estado,
+    }));
+  }
+
+  // Cubre Escenario 3: detalle de un turno específico con reservas y espacios libres.
+  async obtenerDetalle(id: number) {
+    const turno = await this.prisma.turno.findUnique({
+      where: { id },
+      include: { tipoActividad: true },
+    });
+
+    if (!turno) {
+      throw new NotFoundException('El turno no existe');
+    }
+
+    return {
+      id: turno.id,
+      fecha: turno.fecha,
+      hora_inicio: turno.hora_inicio,
+      actividad: turno.tipoActividad.nombre,
+      cantidad_reservas: turno.cantidad_inscriptos,
+      espacios_libres: turno.capacidad - turno.cantidad_inscriptos,
+      capacidad: turno.capacidad,
+      estado: turno.estado,
+    };
+  }
 }
