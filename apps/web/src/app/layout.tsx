@@ -3,6 +3,8 @@ import './globals.css';
 import Sidebar from './Components/Sidebar';
 import Header from './Components/Header';
 import CalendarioTurnos from './Components/Calendario';
+import StepBanner from './Components/Inicio';
+import Inicio from './Components/Inicio';
 
 
 
@@ -31,6 +33,8 @@ export default function RootLayout({
             
             {/* Contenido principal abajo */}
             <main className="flex-1 p-8 overflow-y-auto">
+              {/* 2. Insertamos el Banner arriba del todo */}
+              <Inicio />
               <CalendarioTurnos />
               {children}
 

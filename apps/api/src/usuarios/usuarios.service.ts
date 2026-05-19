@@ -125,7 +125,7 @@ export class UsuariosService {
       throw new BadRequestException('La cuenta fue bloqueada');
     }
     //Escenario 3 y 4: Fallido por contraseña incorrecta
-    if (usuarioIngresado.contrasena !== dto.contrasena) {
+    if (usuarioIngresado.contrasena !== dto.password) {
       const nuevosIntentos = usuarioIngresado.intentosFallidos + 1;
       await this.prisma.usuario.update({
         where: { id: usuarioIngresado.id },
