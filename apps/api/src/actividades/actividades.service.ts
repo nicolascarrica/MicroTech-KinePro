@@ -15,7 +15,7 @@ export class ActividadesService {
     });
 
     if (existe) {
-      throw new BadRequestException('Ya existe una actividad con ese nombre');
+      throw new BadRequestException('La actividad ya se encuentra registrada');
     }
     if (dto.precio === undefined || dto.precio === null) {
       throw new BadRequestException('El precio es obligatorio');
@@ -31,7 +31,7 @@ export class ActividadesService {
       },
     });
 
-    return { message: 'Actividad creada correctamente' };
+    return { message: 'La actividad se creó con éxito' };
   }
 
   // ============================================================
@@ -51,7 +51,7 @@ export class ActividadesService {
     });
 
     if (nombreTomado) {
-      throw new BadRequestException('Ya existe una actividad con ese nombre');
+      throw new BadRequestException('El nombre de la actividad ya se encuentra registrado');
     }
 
     await this.prisma.tipoActividad.update({
@@ -62,7 +62,7 @@ export class ActividadesService {
       },
     });
 
-    return { message: 'Actividad modificada correctamente' };
+    return { message: 'La actividad se modificó con éxito' };
   }
 
   // ============================================================
@@ -72,13 +72,31 @@ export class ActividadesService {
     const actividad = await this.prisma.tipoActividad.findUnique({
       where: { id },
     });
-
+  
     if (!actividad) {
       throw new NotFoundException(`La actividad con ID ${id} no existe`);
     }
-
+  
+    // Verificamos si la actividad tiene turnos asociados que no estén cancelados
+    const turnosActivos = await this.prisma.turno.count({
+      where: {
+        tipoActividad_id: id,
+        estado: { not: 'CANCELADO' },
+      },
+    });
+  
+    if (turnosActivos > 0) {
+      throw new BadRequestException('No se puede eliminar la actividad porque tiene turnos asignados');
+    }
+  
     await this.prisma.tipoActividad.delete({ where: { id } });
-
+  
     return { message: 'Actividad eliminada correctamente' };
+  }
+
+  async listarTodas() {
+    return this.prisma.tipoActividad.findMany({
+      orderBy: { nombre: 'asc' },
+    });
   }
 }

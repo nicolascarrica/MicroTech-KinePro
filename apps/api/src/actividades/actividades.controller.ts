@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Patch, Param, ParseIntPipe, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, ParseIntPipe, Delete, HttpCode, HttpStatus, Get } from '@nestjs/common';
 import { ActividadesService } from './actividades.service';
 import { CreateActividadDto, ModificarActividadDto } from './actividades.dto';
 
@@ -23,5 +23,10 @@ export class ActividadesController {
   @HttpCode(HttpStatus.OK) // Por defecto DELETE devuelve 204 No Content. Lo cambiamos a 200 para poder devolver el message de la HU.
   eliminar(@Param('id', ParseIntPipe) id: number) {
     return this.actividadesService.eliminar(id);
+  }
+
+  @Get()
+  listar() {
+    return this.actividadesService.listarTodas();
   }
 }

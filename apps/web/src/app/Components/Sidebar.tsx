@@ -35,6 +35,9 @@ export default function Sidebar() {
            Usuarios
         </Link>
         
+        <Link href="/actividades" className={linkStyles('/actividades')}>
+          Actividades
+        </Link>
         <Link href="/turnos" className={linkStyles('/turnos')}>
            Turnos
         </Link>
