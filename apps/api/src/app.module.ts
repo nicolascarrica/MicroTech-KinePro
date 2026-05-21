@@ -6,6 +6,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { ActividadesModule } from './actividades/actividades.module';
 import { TurnosModule } from './turnos/turnos.module';
+import { ReservaModule } from './reservas/reserva.module';
+
 
 @Module({
   imports: [
@@ -16,6 +18,7 @@ import { TurnosModule } from './turnos/turnos.module';
     AuthModule,
     ActividadesModule,
     TurnosModule,
+    ReservaModule,
   ],
   providers: [],
 })
