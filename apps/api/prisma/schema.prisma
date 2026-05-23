@@ -175,7 +175,7 @@ model Turno {
   reservas            Reserva[]
   lista_espera        ListaEspera[]
 
-  @@unique([fecha, hora_inicio])
+  @@unique([fecha, hora_inicio, tipoActividad_id])
 }
 
 model Reserva {
