@@ -37,29 +37,20 @@ export class TurnosService {
       throw new BadRequestException('El horario se encuentra fuera del rango horario');
     }
 
-    // Escenarios 2 y 5: verificar si ya existe un turno en ese slot.
-    // (fecha, hora_inicio) es @@unique en el schema.
+    // Verificar que no exista YA la misma actividad en ese día y horario
+    // (la combinación (fecha, hora_inicio, tipoActividad_id) es unique en el schema).
     const turnoExistente = await this.prisma.turno.findUnique({
       where: {
-        fecha_hora_inicio: {
+        fecha_hora_inicio_tipoActividad_id: {
           fecha: fechaDate,
           hora_inicio: horaInicioDate,
+          tipoActividad_id: dto.tipoActividad_id,
         },
       },
     });
 
     if (turnoExistente) {
-      if (turnoExistente.tipoActividad_id === dto.tipoActividad_id) {
-        // Escenario 2: misma actividad en mismo slot
-        throw new BadRequestException(
-          'La actividad ya existe en el día y horario seleccionado',
-        );
-      } else {
-        // Escenario 5: otra actividad ocupando el slot
-        throw new BadRequestException(
-          'El día y horario se encuentra ocupado por otra actividad',
-        );
-      }
+      throw new BadRequestException('La actividad ya existe en el día y horario seleccionado');
     }
 
     // Escenario 1: crear el turno
