@@ -1,8 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreatePacienteDto, LogoutDto, LoginDto } from './usuarios.dto';
-import { UpdateUsuarioDto, UpdateContraseñaDto } from './usuarios.dto';
-
+import { CreatePacienteDto, LogoutDto, LoginDto, CallRestoreContraseñaDto } from './usuarios.dto';
+import { UpdateUsuarioDto,UpdateContraseñaDto, UnlockAccountDto, RestoreContraseñaNuevaDto } from './usuarios.dto';
 @Injectable()
 export class UsuariosService {
   constructor(private prisma: PrismaService) {}
@@ -15,7 +14,6 @@ export class UsuariosService {
     if (dniExiste) {
       throw new BadRequestException('El DNI ya se encuentra registrado');
     }
-
     // Escenario 3: Registro fallido por email ya registrado
     const emailExiste = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
@@ -23,7 +21,6 @@ export class UsuariosService {
     if (emailExiste) {
       throw new BadRequestException('El email ya se encuentra registrado');
     }
-
     // Escenario 4: Registro fallido por teléfono ya registrado
     const telefonoExiste = await this.prisma.usuario.findUnique({
       where: { telefono: dto.telefono },
@@ -31,7 +28,6 @@ export class UsuariosService {
     if (telefonoExiste) {
       throw new BadRequestException('El teléfono ya se encuentra registrado');
     }
-
     // Escenario 5: Registro fallido por edad menor a los 13 años.
     const hoy = new Date();
     const fechaNac = dto.fechaNacimiento;
@@ -41,15 +37,12 @@ export class UsuariosService {
     if (diferenciaMeses < 0 || (diferenciaMeses === 0 && hoy.getDate() < fechaNac.getDate())) {
       edadExacta--;
     }
-
     if (edadExacta < 13) {
       throw new BadRequestException('La edad mínima para registrarse es 13 años');
     }
-
     // Hashear contraseña (Buenas prácticas, nunca en texto plano)
     // const salt = await bcrypt.genSalt();
     // const hashedPassword = await bcrypt.hash(dto.password, salt);
-
     // Escenario 1: Registro exitoso
     await this.prisma.usuario.create({
       data: {
@@ -72,36 +65,30 @@ export class UsuariosService {
     return { message: 'Registro exitoso' };
   }
 
-  async modificar(dto: UpdateUsuarioDto) {
-    // Escenario 2: Fallido por dato/s ya registrado/s en el sistema.
+  async modificar(dto: UpdateUsuarioDto){
+    //Escenario 2: Fallido por dato/s ya registrado/s en el sistema.
     const emailExiste = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
     });
-
     if (emailExiste) {
       throw new BadRequestException('El email ya se encuentra registrado');
     }
-
     const telefonoExiste = await this.prisma.usuario.findUnique({
       where: { telefono: dto.telefono },
     });
-
     if (telefonoExiste) {
       throw new BadRequestException('El teléfono ya se encuentra registrado');
     }
-
-    const dniExiste = await this.prisma.usuario.findUnique({
+    const dniExiste = await this.prisma.usuario.findUnique ({
       where: { dni: dto.dni },
     });
-
     if (dniExiste) {
       throw new BadRequestException('El DNI ya se encuentra registrado');
     }
-
-    // Escenario 1: Modificacion exitosa.
-    // NOTA: el ID no debería venir del body sino extraerse del Token JWT en el Controller.
-    await this.prisma.usuario.update({
-      where: { id: dto.id },
+    //Escenario 1: Modificacion exitosa.
+    const usuarioModificado = await this.prisma.usuario.update({
+      where: { id: dto.id }, //Esto esta mal porque significa que cualquiera
+      //puede cambiar a cualquiera ingresando un ID random. No se como arreglarlo.
       data: {
         email: dto.email,
         nombre: dto.nombre,
@@ -129,84 +116,158 @@ export class UsuariosService {
       throw new BadRequestException('La cuenta fue bloqueada');
     }
 
-    // Escenario 3 y 4: Fallido por contraseña incorrecta
-    if (usuarioIngresado.contrasena !== dto.password) {
-      const nuevosIntentos = usuarioIngresado.intentosFallidos + 1;
+    //Escenario 3 y 4: Fallido por contraseña incorrecta
+    if (usuarioIngresado.contrasena !== dto.contrasena) {
 
-      await this.prisma.usuario.update({
-        where: { id: usuarioIngresado.id },
-        data: { intentosFallidos: nuevosIntentos },
-      });
+  const nuevosIntentos = usuarioIngresado.intentosFallidos + 1;
 
-      if (nuevosIntentos === 3) {
-        await this.prisma.usuario.update({
-          where: { id: usuarioIngresado.id },
-          data: { bloqueado: true },
-        });
+  await this.prisma.usuario.update({
+    where: { id: usuarioIngresado.id },
+    data: {
+      intentosFallidos: nuevosIntentos,
+    },
+  });
 
-        throw new BadRequestException(
-          'Contraseña incorrecta. La cuenta fue bloqueada y se le envio un email al correo asociado para desbloquearla',
-        );
-        // Acá iría la acción que llama a la HU desbloquear cuenta.
-      }
+  if (nuevosIntentos === 3) {
 
-      throw new BadRequestException('Contraseña incorrecta, intente nuevamente.');
-    }
+    const nuevoToken = 'abc123';
+    await this.prisma.usuario.update({
+      where: { id: usuarioIngresado.id },
+      data: {
+        bloqueado: true,
+        token: nuevoToken, //Por ahora le doy un valor random para probar q funcione.
+      },
+    });
+    
+    this.desbloquearCuentaEmail(nuevoToken);
+    throw new BadRequestException(
+      'Contraseña incorrecta. La cuenta fue bloqueada y se le envio un email al correo asociado para desbloquearla'
+    );
+  }
 
-    // Escenario 1: Exitoso
+  throw new BadRequestException(
+    'Contraseña incorrecta, intente nuevamente.'
+  );
+}
+  
+    //Escenario 1: Exitoso
     await this.prisma.usuario.update({
       where: { id: usuarioIngresado.id },
       data: { intentosFallidos: 0 },
     });
-
-    // NOTA: Para completar el inicio de sesión, acá deberías firmar y retornar un JWT Access Token.
     return { message: 'Inicio de sesión exitoso' };
-  }
+    //Va algo mas? iria algo que ejecute el inicio de sesion imagino.
+}
 
+   async desbloquearCuentaEmail(token: string) {
+      console.log(`Correo enviado con el token: ${token}`);
+}
+
+// Se ejecuta cuando el usuario haga click en el enlace 
+async confirmarDesbloqueo(token: string) {
+  try {
+    await this.prisma.usuario.update({
+      where: { token: token },
+      data: {
+        bloqueado: false,
+        intentosFallidos: 0,
+        token: null,
+      },
+    });
+    return { message: 'Cuenta desbloqueada exitosamente.' };
+  } catch (error) {
+    throw new BadRequestException('El enlace de desbloqueo es inválido o ya expiró.');
+  }
+}
+ 
   async cerrarsesion(dto: LogoutDto) {
     const usuarioLogueado = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
     });
-
     if (!usuarioLogueado) {
       throw new BadRequestException('Usuario no encontrado');
     }
-
-    // NOTA: Si manejás JWT, la lógica principal del logout suele resolverse en el Controller o el cliente.
     return { message: 'Sesión cerrada correctamente' };
   }
 
-  async modificarcontraseña(dto: UpdateContraseñaDto) {
+  async modificarcontraseña (dto: UpdateContraseñaDto){ 
     const usuarioLog = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
     });
-
+    // Esto es necesario porque sino me tira error en usuarioLog mas abajo.
     if (!usuarioLog) {
       throw new BadRequestException('Usuario no encontrado');
     }
-
-    // Escenario 2: Fallido por contraseña actual incorrecta.
+    //Escenario 2: Fallido por contraseña actual incorrecta.
     if (usuarioLog.contrasena !== dto.contrasenaactual) {
       throw new BadRequestException('La contraseña actual es incorrecta');
     }
-
-    // Escenario 3: Fallido por contraseña nueva igual a la actual.
-    if (usuarioLog.contrasena === dto.contrasenanueva) {
+    //Escenaario 3: Fallido por contraseña nueva igual a la actual.
+    if (usuarioLog.contrasena === dto.contrasenanueva){
       throw new BadRequestException('La contraseña nueva no puede ser igual a la actual');
     }
-
-    // Escenario 4: Fallido por contraseña nueva menor a 8 caracteres.
-    if (dto.contrasenanueva.length < 8) {
+    //Escenario 4: Fallido por contraseña nueva menor a 8 caracteres.
+    if (dto.contrasenanueva.length < 8){
       throw new BadRequestException('La contraseña debe contener mínimo 8 caracteres');
     }
-
     await this.prisma.usuario.update({
-      where: { email: dto.email },
-      data: { contrasena: dto.contrasenanueva },
-    });
-
-    return { message: 'Contraseña modificada correctamente' };
+      where: {email: dto.email },
+      data: {
+        contrasena:dto.contrasenanueva,
+      }
+    }); 
+    return { message: 'Contraseña modificada correctamente' }; 
   }
+
+  async callRestablecerContraseña (dto: CallRestoreContraseñaDto){
+    const usuarioRestablecer = await this.prisma.usuario.findUnique({
+      where: { email: dto.email },
+    });
+    //Escenario 2: Envio de enlace fallido.
+    if (!usuarioRestablecer){
+      throw new BadRequestException('“Si la dirección proporcionada pertenece a una cuenta, recibirás un enlace para restablecer tu contraseña.');
+    }
+    //Escenario 1: Envio de enlace exitoso.
+    const tokenNuevo = 'def456';
+    await this.prisma.usuario.update({
+      where: { id: usuarioRestablecer.id },
+      data: {
+        token: tokenNuevo,
+      },
+    });
+    this.enviarCorreoRestablecimiento (usuarioRestablecer.email, tokenNuevo);
+    throw new BadRequestException('“Si la dirección proporcionada pertenece a una cuenta, recibirás un enlace para restablecer tu contraseña.');
+  }
+
+  async enviarCorreoRestablecimiento(email: string, token: string) {
+  console.log(`Correo enviado a ${email} con el token: ${token}`);
+  }
+
+ async restablecimientoContraseña(dto: RestoreContraseñaNuevaDto) { 
+  const usuarioPorRestablecer = await this.prisma.usuario.findFirst({
+    where: { token: dto.token },
+  });
+  if (!usuarioPorRestablecer || !dto.token) {
+    throw new BadRequestException('El enlace de restablecimiento es inválido o ya expiró.');
+  }
+  // Escenario 4: Fallido por contraseñas idénticas
+  if (usuarioPorRestablecer.contrasena === dto.nuevacontraseña) {
+    throw new BadRequestException('La contraseña debe ser distinta a la actual');
+  }
+  // Escenario 5: Fallido por contraseña nueva menor a 8 caracteres
+  if (dto.nuevacontraseña.length < 8) {
+    throw new BadRequestException('La contraseña debe contener mínimo 8 caracteres');
+  }
+  // Escenario 3: Restablecimiento exitoso
+  await this.prisma.usuario.update({
+    where: { id: usuarioPorRestablecer.id },
+    data: {
+      contrasena: dto.nuevacontraseña,
+      token: null, 
+    }
+  });
+  return { message: 'Restablecimiento exitoso' }; 
+}
 
   async obtenerTodos() {
     const usuarios = await this.prisma.usuario.findMany({
@@ -226,7 +287,7 @@ export class UsuariosService {
     if (usuarios.length === 0) {
       return { message: 'No existen usuarios', data: [] };
     }
-
+    // Escenario 1
     return { data: usuarios };
   }
 
@@ -251,4 +312,5 @@ export class UsuariosService {
 
     return { data: usuario };
   }
+
 }

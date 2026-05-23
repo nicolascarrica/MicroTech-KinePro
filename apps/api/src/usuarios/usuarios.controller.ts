@@ -2,6 +2,7 @@ import { Controller, Post, Put, Body, Get, Param, ParseIntPipe } from '@nestjs/c
 import { UsuariosService } from './usuarios.service';
 import { CreatePacienteDto, LoginDto, LogoutDto } from './usuarios.dto';
 import { UpdateContraseñaDto, UpdateUsuarioDto } from './usuarios.dto';
+import { RestoreContraseñaNuevaDto, CallRestoreContraseñaDto, UnlockAccountDto } from './usuarios.dto';
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
@@ -12,7 +13,7 @@ export class UsuariosController {
   }
 
 
-  @Post('modificacion')
+  @Put('modificacion')
   modificar(@Body() UpdateUsuarioDto: UpdateUsuarioDto) {
     return this.usuariosService.modificar(UpdateUsuarioDto);
   }
@@ -30,6 +31,23 @@ export class UsuariosController {
   @Put('modificarcontraseña')
   modificarContraseña(@Body() UpdateContraseñaDto: UpdateContraseñaDto){
     return this.usuariosService.modificarcontraseña(UpdateContraseñaDto);
+  }
+
+  @Put('llamadarestablecimiento')
+  restablecerContraseña(@Body() callRestoreContraseñaDto: CallRestoreContraseñaDto){
+    return this.usuariosService.callRestablecerContraseña(callRestoreContraseñaDto);
+  }
+
+  @Put('restablecimiento')
+  restablecimiento(@Body() restoreContraseñaNuevaDto: RestoreContraseñaNuevaDto){
+    // ◄--- CORRECCIÓN 2: Quitamos el segundo parámetro duplicado (.email) 
+    // y llamamos al nombre correcto del método del servicio:
+    return this.usuariosService.restablecimientoContraseña(restoreContraseñaNuevaDto);
+  } 
+
+  @Put('desbloqueo') // Cambiado a PUT porque modifica un estado existente en la BD
+  desbloquear(@Body() unlockAccountDto: UnlockAccountDto){
+    return this.usuariosService.confirmarDesbloqueo(unlockAccountDto.token);
   }
 
   @Get()
