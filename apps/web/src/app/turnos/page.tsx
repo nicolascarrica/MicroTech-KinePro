@@ -6,6 +6,8 @@ import TurnoGrid from '@/components/turnos/TurnoGrid'
 import TurnoModal from '@/components/turnos/TurnoModal'
 import { getTurnosByFecha, getTurnoById } from '@/services/turnosService'
 import type { TurnoResumen, TurnoDetalle } from '@/types/turno'
+import CrearTurnoModal from '@/components/turnos/CrearTurnoModal'
+import { Plus } from 'lucide-react'
 
 // FullCalendar no soporta SSR → carga dinámica solo en cliente
 const CalendarioTurnos = dynamic(() => import('@/components/turnos/CalendarioTurnos'), { ssr: false })
@@ -17,6 +19,8 @@ export default function TurnosPage() {
 
   const [turnoDetalle, setTurnoDetalle] = useState<TurnoDetalle | null>(null)
   const [loadingDetalle, setLoadingDetalle] = useState(false)
+
+  const [modalCrearAbierto, setModalCrearAbierto] = useState(false)
 
   async function handleFechaSelect(fecha: string) {
     setFechaSeleccionada(fecha)
@@ -49,7 +53,16 @@ export default function TurnosPage() {
   return (
     <main className="min-h-screen bg-neutral-bg/40 p-6">
       <div className="mx-auto max-w-6xl">
-        <h1 className="mb-6 text-2xl font-bold text-kineblue">Turnos</h1>
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-kineblue">Turnos</h1>
+          <button
+            onClick={() => setModalCrearAbierto(true)}
+            className="bg-kine-blue hover:bg-kine-blue-deep text-white text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Crear turno
+          </button>
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
           <section>
@@ -74,6 +87,15 @@ export default function TurnosPage() {
         turno={turnoDetalle}
         loading={loadingDetalle}
         onClose={handleCloseModal}
+      />
+
+      <CrearTurnoModal
+        abierto={modalCrearAbierto}
+        fechaInicial={fechaSeleccionada}
+        onClose={() => setModalCrearAbierto(false)}
+        onCreado={() => {
+          if (fechaSeleccionada) handleFechaSelect(fechaSeleccionada)
+        }}
       />
     </main>
   )
