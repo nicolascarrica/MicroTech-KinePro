@@ -56,7 +56,6 @@ const MOCK_TURNOS: TurnoResumen[] = [
 ]
 // --- Fin mock data ---
 
-
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api'
 
 async function requestTurno<T>(path: string, options?: RequestInit): Promise<T> {
