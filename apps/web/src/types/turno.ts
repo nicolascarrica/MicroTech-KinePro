@@ -17,3 +17,11 @@ export interface TurnoDetalle {
   reservasActuales: number
   espaciosLibres: number
 }
+
+
+export interface CrearTurnoInput {
+  tipoActividad_id: number
+  fecha: string         // formato YYYY-MM-DD
+  hora_inicio: string   // formato HH:MM
+  capacidad: number
+}
