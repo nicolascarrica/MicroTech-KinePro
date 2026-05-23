@@ -60,7 +60,7 @@ export class LoginDto {
   email!: string;
 
   @IsString()
-  password!: string;
+  contrasena!: string;
 }
 export class LogoutDto {
   email!: string;
@@ -86,10 +86,10 @@ export class UpdateContraseñaDto {
   token!: string;
 
   @IsString()
-  passwordActual!: string;
+  contraseñaactual!: string;
   
   @IsString()
-  passwordNueva!: string;
+  nuevacontraseña!: string;
 }
 export class UnlockAccountDto {
   @IsString({ message: 'El token debe ser una cadena de texto' })
