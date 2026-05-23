@@ -103,6 +103,7 @@ model Usuario {
   //Migrarlo a bd el campo los de abajo y hacer todo lo demas
   intentosFallidos    Int      @default(0)
   bloqueado           Boolean  @default(false)
+  token               String?  @unique 
   
   //Comment: Hacer una tabla de sesion por usuario y cada sesion tendra
   //un intento fallido y ver si esta bloqueado o no
@@ -147,8 +148,8 @@ model TipoActividad {
 
 model Actividad {
   id             Int         @id @default(autoincrement())
-  TipoActividad_id   Int
-  tipoActividad      TipoActividad   @relation(fields: [TipoActividad_id], references: [id])
+  tipoActividad_id   Int
+  tipoActividad      TipoActividad   @relation(fields: [tipoActividad_id], references: [id])
   kinesiologo_id Int
   kinesiologo    Kinesiologo @relation(fields: [kinesiologo_id], references: [id])
   dia_semana     DiaSemana

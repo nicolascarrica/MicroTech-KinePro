@@ -9,15 +9,12 @@ import { getActividades, eliminarActividad } from '@/services/actividadesService
 import type { Actividad } from '@/types/actividad'
 import ConfirmDialog from '@/app/Components/ConfirmDialog'
 
-
 export default function TablaActividades() {
   const [actividades, setActividades] = useState<Actividad[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
   const [modalAbierto, setModalAbierto] = useState(false)
   const [actividadEnEdicion, setActividadEnEdicion] = useState<Actividad | null>(null)
-
   const [actividadAEliminar, setActividadAEliminar] = useState<Actividad | null>(null)
   const [eliminando, setEliminando] = useState(false)
 
@@ -48,7 +45,7 @@ export default function TablaActividades() {
   }
 
   function pedirEliminar(actividad: Actividad) {
-  setActividadAEliminar(actividad)
+    setActividadAEliminar(actividad)
   }
 
   async function confirmarEliminar() {
@@ -151,6 +148,7 @@ export default function TablaActividades() {
         onClose={() => setModalAbierto(false)}
         onGuardado={cargar}
       />
+
       <ConfirmDialog
         abierto={actividadAEliminar !== null}
         titulo="Eliminar actividad"
