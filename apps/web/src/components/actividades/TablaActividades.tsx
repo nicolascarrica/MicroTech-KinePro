@@ -7,6 +7,8 @@ import TablaGenerica, { Columna } from '@/app/Components/TablaGenerica'
 import ActividadModal from './ActividadModal'
 import { getActividades, eliminarActividad } from '@/services/actividadesService'
 import type { Actividad } from '@/types/actividad'
+import ConfirmDialog from '@/app/Components/ConfirmDialog'
+
 
 export default function TablaActividades() {
   const [actividades, setActividades] = useState<Actividad[]>([])
@@ -15,6 +17,9 @@ export default function TablaActividades() {
 
   const [modalAbierto, setModalAbierto] = useState(false)
   const [actividadEnEdicion, setActividadEnEdicion] = useState<Actividad | null>(null)
+
+  const [actividadAEliminar, setActividadAEliminar] = useState<Actividad | null>(null)
+  const [eliminando, setEliminando] = useState(false)
 
   async function cargar() {
     setCargando(true)
@@ -42,14 +47,22 @@ export default function TablaActividades() {
     setModalAbierto(true)
   }
 
-  async function handleEliminar(actividad: Actividad) {
-    if (!confirm(`¿Eliminar la actividad "${actividad.nombre}"?`)) return
+  function pedirEliminar(actividad: Actividad) {
+  setActividadAEliminar(actividad)
+  }
+
+  async function confirmarEliminar() {
+    if (!actividadAEliminar) return
+    setEliminando(true)
     try {
-      const res = await eliminarActividad(actividad.id)
+      const res = await eliminarActividad(actividadAEliminar.id)
       toast.success(res.message)
+      setActividadAEliminar(null)
       cargar()
     } catch (e: any) {
       toast.error('No se pudo eliminar', { description: e.message })
+    } finally {
+      setEliminando(false)
     }
   }
 
@@ -75,7 +88,7 @@ export default function TablaActividades() {
             Modificar
           </button>
           <button
-            onClick={() => handleEliminar(a)}
+            onClick={() => pedirEliminar(a)}
             className="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-xl text-xs font-semibold border border-red-100 flex items-center gap-1.5 transition-colors"
             title="Eliminar"
           >
@@ -137,6 +150,21 @@ export default function TablaActividades() {
         actividad={actividadEnEdicion}
         onClose={() => setModalAbierto(false)}
         onGuardado={cargar}
+      />
+      <ConfirmDialog
+        abierto={actividadAEliminar !== null}
+        titulo="Eliminar actividad"
+        mensaje={
+          actividadAEliminar
+            ? `¿Estás seguro de que querés eliminar la actividad "${actividadAEliminar.nombre}"? Esta acción no se puede deshacer.`
+            : ''
+        }
+        textoConfirmar="Eliminar"
+        textoCancelar="Cancelar"
+        variante="peligro"
+        procesando={eliminando}
+        onConfirmar={confirmarEliminar}
+        onCancelar={() => setActividadAEliminar(null)}
       />
     </div>
   )
