@@ -1,6 +1,6 @@
 'use client'
 
-import { CalendarCheck } from 'lucide-react'
+import { CalendarCheck, Check } from 'lucide-react'
 import type { TurnoPacientePasado } from '@/types/turnoPaciente'
 
 function formatFecha(fecha: string): string {
@@ -40,16 +40,28 @@ export default function ListaTurnosPasados({ turnos }: ListaTurnosPasadosProps) 
                 </p>
               </div>
             </div>
-            <label className="flex cursor-default items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-              <input
-                type="checkbox"
-                checked={turno.asistio}
-                readOnly
-                disabled
-                className="h-4 w-4 rounded border-slate-300 text-teal-600"
-              />
-              <span className="font-medium text-slate-700">Asistió</span>
-            </label>
+            <div
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
+              role="group"
+              aria-label="Asistencia al turno"
+            >
+              <span
+                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                  turno.asistio
+                    ? 'border-pro-green-deep bg-pro-green-deep text-white'
+                    : 'border-red-800 bg-white'
+                }`}
+              >
+                {turno.asistio && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+              </span>
+              <span
+                className={`font-medium ${
+                  turno.asistio ? 'text-pro-green-deep' : 'text-red-800'
+                }`}
+              >
+                {turno.asistio ? 'Asistió' : 'Ausente'}
+              </span>
+            </div>
           </div>
         </li>
       ))}
