@@ -13,4 +13,51 @@ async function requestTurno<T>(path: string, options?: RequestInit): Promise<T> 
   return data as T
 }
 
+export async function modificarContrasena(payload: {
+  email: string
+  passwordActual: string
+  passwordNueva: string
+}): Promise<{ message: string }> {
+  return request('/usuarios/modificarcontraseña', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
 
+export async function solicitarRestablecimiento(email: string): Promise<{ message: string }> {
+  return request('/usuarios/llamadarestablecimiento', {
+    method: 'PUT',
+    body: JSON.stringify({ email }),
+  })
+}
+
+export async function restablecerContrasena(payload: {
+  token: string
+  passwordNueva: string
+}): Promise<{ message: string }> {
+  return request('/usuarios/restablecimiento', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function desbloquearCuenta(token: string): Promise<{ message: string }> {
+  return request('/usuarios/desbloqueo', {
+    method: 'PUT',
+    body: JSON.stringify({ token }),
+  })
+}
+
+export async function modificarDatosPersonales(payload: {
+  id: number
+  nombre?: string
+  apellido?: string
+  email?: string
+  telefono?: string
+  dni?: string
+}): Promise<{ message: string }> {
+  return request('/usuarios/modificacion', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}

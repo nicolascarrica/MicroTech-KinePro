@@ -66,7 +66,7 @@ export class LogoutDto {
   email!: string;
 }
 
-export class UpdateContraseñaDto {
+export class UpdateContrasenaDto {
   @IsString()
   passwordActual!: string;
 
@@ -77,18 +77,16 @@ export class UpdateContraseñaDto {
   email!: string;
 }
 
- export class CallRestoreContraseñaDto {
+ export class CallRestoreContrasenaDto {
   @IsEmail()
   email!: string;
 }
- export class RestoreContraseñaNuevaDto {
-  @IsEmail()
+export class RestoreContrasenaNuevaDto {
+  @IsString()
   token!: string;
 
   @IsString()
-  passwordActual!: string;
-  
-  @IsString()
+  @MinLength(8, { message: 'La contraseña debe contener mínimo 8 caracteres' })
   passwordNueva!: string;
 }
 export class UnlockAccountDto {

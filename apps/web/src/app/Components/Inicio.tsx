@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { toast } from 'sonner'; 
 
 export default function Inicio() {
@@ -192,6 +193,18 @@ export default function Inicio() {
                   placeholder="••••••••" 
                 />
               </div>
+
+              {authMode === 'login' && (
+                <p className="text-right text-sm">
+                  <Link
+                    href="/restablecer"
+                    onClick={() => setIsModalOpen(false)}
+                    className="text-teal-600 hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </p>
+              )}
               
               <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-xl transition-colors mt-2">
                 {authMode === 'login' ? 'Ingresar' : 'Crear Cuenta'}

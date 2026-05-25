@@ -1,114 +1,155 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect } from 'react';
-import { toast } from 'sonner'; // 👈 Importamos sonner
-import { User, Settings, Calendar, LogOut, ChevronDown } from 'lucide-react'; // 👈 Importamos iconos pro
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { toast } from 'sonner'
+import {
+  User,
+  KeyRound,
+  UserPen,
+  CalendarClock,
+  History,
+  LogOut,
+  ChevronDown,
+} from 'lucide-react'
+import ModificarContrasenaModal from '@/components/usuarios/ModificarContrasenaModal'
+
+type UsuarioSesion = {
+  id?: number
+  nombre: string
+  apellido: string
+  email: string
+}
 
 export default function PerfilDropdown() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [usuario, setUsuario] = useState<{ nombre: string; apellido: string; email: string } | null>(null);
+  const [isOpen, setIsOpen] = useState(false)
+  const [modalContrasena, setModalContrasena] = useState(false)
+  const [usuario, setUsuario] = useState<UsuarioSesion | null>(null)
 
   useEffect(() => {
-    const userStorage = localStorage.getItem('kinepro_user');
+    const userStorage = localStorage.getItem('kinepro_user')
     if (userStorage) {
-      setUsuario(JSON.parse(userStorage));
+      setUsuario(JSON.parse(userStorage))
     }
-  }, []);
+  }, [])
 
   const Logout = () => {
-    localStorage.removeItem('kinepro_token');
-    localStorage.removeItem('kinepro_user');
-    
-    toast.success('Sesión cerrada correctamente');
-    
-    setIsOpen(false);
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
-  };
+    localStorage.removeItem('kinepro_token')
+    localStorage.removeItem('kinepro_user')
 
-  const nombreCompleto = usuario ? `${usuario.nombre} ${usuario.apellido}` : 'Invitado';
-  const emailUsuario = usuario ? usuario.email : 'sin-sesion@kinepro.com';
-  const inicial = usuario ? usuario.nombre[0].toUpperCase() : 'I';
+    toast.success('Sesión cerrada correctamente')
+
+    setIsOpen(false)
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000)
+  }
+
+  const nombreCompleto = usuario ? `${usuario.nombre} ${usuario.apellido}` : 'Invitado'
+  const emailUsuario = usuario ? usuario.email : 'sin-sesion@kinepro.com'
+  const inicial = usuario ? usuario.nombre[0].toUpperCase() : 'I'
 
   return (
-    <div className="relative inline-block text-left">
-      
-      {/* Botón Disparador */}
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 focus:outline-none hover:bg-slate-50 p-1.5 rounded-xl transition-colors"
-      >
-        <div className="flex flex-col text-right  sm:flex">
-          <span className="text-sm font-bold text-slate-700">{nombreCompleto}</span>
-          <span className="text-xs text-slate-400 font-medium">
-            {usuario ? 'Paciente' : 'Sin Sesión'}
-          </span>
-        </div>
-        <div className="w-10 h-10 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center font-bold text-lg border border-teal-100 shadow-sm">
-          {inicial}
-        </div>
-        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && (
-        <>
-         
-          <div className="fixed inset-0 z-20" onClick={() => setIsOpen(false)}></div>
-
-          {/* Caja del menú desplegable */}
-          <div className="absolute right-0 mt-2 w-72 bg-white shadow-xl border border-slate-100 z-30 rounded-2xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
-            
-            {/* Cabecera interna del menú */}
-            <div className="p-4 bg-slate-50/60 flex flex-col border-b border-slate-100">
-              <span className="font-semibold text-slate-800 text-sm">{nombreCompleto}</span>
-              <span className="text-xs text-slate-400 mt-0.5 truncate">{emailUsuario}</span>
-            </div>
-            
-            {/* Opciones */}
-            <div className="p-1.5 flex flex-col gap-0.5 text-sm text-slate-600">
-              <a 
-                href="#perfil" 
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center gap-2.5 font-medium"
-              >
-                <User className="w-4 h-4 text-slate-400" />
-                Mi Perfil
-              </a>
-              <a 
-                href="#config" 
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center gap-2.5 font-medium"
-              >
-                <Settings className="w-4 h-4 text-slate-400" />
-                Configuración de la cuenta
-              </a>
-              <a 
-                href="#turnos" 
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-2 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center gap-2.5 font-medium"
-              >
-                <Calendar className="w-4 h-4 text-slate-400" />
-                Ver mis turnos
-              </a>
-            </div>
-
-            <div className="border-t border-slate-100"></div>
-            
-            {/* Cerrar Sesión */}
-            <div className="p-1.5">
-              <button 
-                onClick={Logout} 
-                className="w-full text-left px-3 py-2 rounded-xl text-sm text-red-600 hover:bg-red-50 transition-colors font-semibold flex items-center gap-2.5"
-              >
-                <LogOut className="w-4 h-4" />
-                Cerrar sesión
-              </button>
-            </div>
-
+    <>
+      <div className="relative inline-block text-left">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-3 rounded-xl p-1.5 transition-colors hover:bg-slate-50 focus:outline-none"
+        >
+          <div className="flex flex-col text-right sm:flex">
+            <span className="text-sm font-bold text-slate-700">{nombreCompleto}</span>
+            <span className="text-xs font-medium text-slate-400">
+              {usuario ? 'Paciente' : 'Sin Sesión'}
+            </span>
           </div>
-        </>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-teal-100 bg-teal-50 text-lg font-bold text-teal-600 shadow-sm">
+            {inicial}
+          </div>
+          <ChevronDown
+            className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
+
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-20" onClick={() => setIsOpen(false)} />
+
+            <div className="absolute right-0 z-30 mt-2 w-72 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xl duration-150 animate-in fade-in slide-in-from-top-1">
+              <div className="flex flex-col border-b border-slate-100 bg-slate-50/60 p-4">
+                <span className="text-sm font-semibold text-slate-800">{nombreCompleto}</span>
+                <span className="mt-0.5 truncate text-xs text-slate-400">{emailUsuario}</span>
+              </div>
+
+              <div className="flex flex-col gap-0.5 p-1.5 text-sm text-slate-600">
+                <a
+                  href="#perfil"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium transition-colors hover:bg-slate-50 hover:text-slate-900"
+                >
+                  <User className="h-4 w-4 text-slate-400" />
+                  Mi Perfil
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false)
+                    setModalContrasena(true)
+                  }}
+                  disabled={!usuario}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left font-medium transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50"
+                >
+                  <KeyRound className="h-4 w-4 text-slate-400" />
+                  Modificar contraseña
+                </button>
+                <Link
+                  href="/perfil/datos"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium transition-colors hover:bg-slate-50 hover:text-slate-900"
+                >
+                  <UserPen className="h-4 w-4 text-slate-400" />
+                  Modificar datos personales
+                </Link>
+                <Link
+                  href="/mis-turnos/pendientes"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium transition-colors hover:bg-slate-50 hover:text-slate-900"
+                >
+                  <CalendarClock className="h-4 w-4 text-slate-400" />
+                  Ver turnos pendientes
+                </Link>
+                <Link
+                  href="/mis-turnos/pasados"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium transition-colors hover:bg-slate-50 hover:text-slate-900"
+                >
+                  <History className="h-4 w-4 text-slate-400" />
+                  Ver turnos pasados
+                </Link>
+              </div>
+
+              <div className="border-t border-slate-100" />
+
+              <div className="p-1.5">
+                <button
+                  onClick={Logout}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Cerrar sesión
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {usuario && (
+        <ModificarContrasenaModal
+          abierto={modalContrasena}
+          email={usuario.email}
+          onClose={() => setModalContrasena(false)}
+        />
       )}
-    </div>
-  );
+    </>
+  )
 }

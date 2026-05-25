@@ -1,7 +1,9 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreatePacienteDto, LogoutDto, LoginDto, CallRestoreContraseñaDto } from './usuarios.dto';
-import { UpdateUsuarioDto,UpdateContraseñaDto, UnlockAccountDto, RestoreContraseñaNuevaDto } from './usuarios.dto';
+import { CreatePacienteDto, LogoutDto, LoginDto, CallRestoreContrasenaDto } from './usuarios.dto';
+import { UpdateUsuarioDto,UpdateContrasenaDto, UnlockAccountDto, RestoreContrasenaNuevaDto } from './usuarios.dto';
+import crypto from 'crypto';
+
 @Injectable()
 export class UsuariosService {
   constructor(private prisma: PrismaService) {}
@@ -101,7 +103,7 @@ export class UsuariosService {
     return { message: 'Modificacion de datos exitosa' };
   }
 
-  async iniciarsesion(dto: LoginDto) {
+  async iniciarSesion(dto: LoginDto) {
     const usuarioIngresado = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
     });
@@ -113,42 +115,42 @@ export class UsuariosService {
 
     // Escenario 5: Fallido por cuenta bloqueada
     if (usuarioIngresado.bloqueado) {
-      throw new BadRequestException('La cuenta fue bloqueada');
+      throw new BadRequestException('La cuenta se encuentra bloqueada');
     }
 
     //Escenario 3 y 4: Fallido por contraseña incorrecta
     if (usuarioIngresado.contrasena !== dto.password) {
+      const nuevosIntentos = usuarioIngresado.intentosFallidos + 1;
 
-  const nuevosIntentos = usuarioIngresado.intentosFallidos + 1;
+      await this.prisma.usuario.update({
+        where: { id: usuarioIngresado.id },
+        data: {
+          intentosFallidos: nuevosIntentos,
+        },
+      });
 
-  await this.prisma.usuario.update({
-    where: { id: usuarioIngresado.id },
-    data: {
-      intentosFallidos: nuevosIntentos,
-    },
-  });
-
-  if (nuevosIntentos === 3) {
-
-    const nuevoToken = 'abc123';
-    await this.prisma.usuario.update({
-      where: { id: usuarioIngresado.id },
-      data: {
-        bloqueado: true,
-        token: nuevoToken, //Por ahora le doy un valor random para probar q funcione.
-      },
-    });
+      if (nuevosIntentos === 3) {
+        
+        const nuevoToken = crypto.randomBytes(4).toString('hex');
+        // Ejemplo: "a3t8c2e1"
+        await this.prisma.usuario.update({
+          where: { id: usuarioIngresado.id },
+          data: {
+            bloqueado: true,
+            token: nuevoToken,
+          },
+        });
     
-    this.desbloquearCuentaEmail(nuevoToken);
-    throw new BadRequestException(
-      'Contraseña incorrecta. La cuenta fue bloqueada y se le envio un email al correo asociado para desbloquearla'
-    );
-  }
+        this.desbloquearCuentaEmail(nuevoToken);
+        throw new BadRequestException(
+          'Contraseña incorrecta. La cuenta fue bloqueada y se le envió un email al correo asociado para desbloquearla'
+        );
+      }
 
-  throw new BadRequestException(
-    'Contraseña incorrecta, intente nuevamente.'
-  );
-}
+      throw new BadRequestException(
+        'Contraseña incorrecta, intente nuevamente.'
+      );
+    }
   
     //Escenario 1: Exitoso
     await this.prisma.usuario.update({
@@ -157,30 +159,31 @@ export class UsuariosService {
     });
     return { message: 'Inicio de sesión exitoso' };
     //Va algo mas? iria algo que ejecute el inicio de sesion imagino.
-}
-
-   async desbloquearCuentaEmail(token: string) {
-      console.log(`Correo enviado con el token: ${token}`);
-}
-
-// Se ejecuta cuando el usuario haga click en el enlace 
-async confirmarDesbloqueo(token: string) {
-  try {
-    await this.prisma.usuario.update({
-      where: { token: token },
-      data: {
-        bloqueado: false,
-        intentosFallidos: 0,
-        token: null,
-      },
-    });
-    return { message: 'Cuenta desbloqueada exitosamente.' };
-  } catch (error) {
-    throw new BadRequestException('El enlace de desbloqueo es inválido o ya expiró.');
   }
-}
+
+  async desbloquearCuentaEmail(token: string) {
+    const baseUrl = process.env.WEB_ORIGIN ?? 'http://localhost:3000';
+    console.log(`Correo de desbloqueo. Enlace: ${baseUrl}/desbloqueo?token=${token}`);
+  }
+
+  // Se ejecuta cuando el usuario haga click en el enlace 
+  async confirmarDesbloqueo(token: string) {
+    try {
+      await this.prisma.usuario.update({
+        where: { token: token },
+        data: {
+          bloqueado: false,
+          intentosFallidos: 0,
+          token: null,
+        },
+      });
+      return { message: 'Desbloqueo exitoso' };
+    } catch (error) {
+      throw new BadRequestException('El enlace de desbloqueo es inválido o ya expiró.');
+    }
+  }
  
-  async cerrarsesion(dto: LogoutDto) {
+  async cerrarSesion(dto: LogoutDto) {
     const usuarioLogueado = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
     });
@@ -190,7 +193,7 @@ async confirmarDesbloqueo(token: string) {
     return { message: 'Sesión cerrada correctamente' };
   }
 
-  async modificarcontraseña (dto: UpdateContraseñaDto){ 
+  async modificarContrasena (dto: UpdateContrasenaDto){ 
     const usuarioLog = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
     });
@@ -203,47 +206,50 @@ async confirmarDesbloqueo(token: string) {
       throw new BadRequestException('La contraseña actual es incorrecta');
     }
     //Escenaario 3: Fallido por contraseña nueva igual a la actual.
-    if (usuarioLog.contrasena === dto.passwordNueva){
-      throw new BadRequestException('La contraseña nueva no puede ser igual a la actual');
+    if (usuarioLog.contrasena === dto.passwordNueva) {
+      throw new BadRequestException('La contraseña nueva debe ser distinta a la actual');
     }
     //Escenario 4: Fallido por contraseña nueva menor a 8 caracteres.
     if (dto.passwordNueva.length < 8){
       throw new BadRequestException('La contraseña debe contener mínimo 8 caracteres');
     }
     await this.prisma.usuario.update({
-      where: {email: dto.email },
+      where: { email: dto.email },
       data: {
-        password:dto.passwordNueva,
-      }
+        contrasena: dto.passwordNueva,
+      },
     }); 
-    return { message: 'Contraseña modificada correctamente' }; 
+    return { message: 'Modificación exitosa' };
   }
 
-  async callRestablecerContraseña (dto: CallRestoreContraseñaDto){
+  async callRestablecerContrasena(dto: CallRestoreContrasenaDto) {
+    const mensajeEnlace =
+      'Si la dirección proporcionada pertenece a una cuenta, recibirás un enlace para restablecer tu contraseña.';
+
     const usuarioRestablecer = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
     });
-    //Escenario 2: Envio de enlace fallido.
-    if (!usuarioRestablecer){
-      throw new BadRequestException('“Si la dirección proporcionada pertenece a una cuenta, recibirás un enlace para restablecer tu contraseña.');
+
+    if (usuarioRestablecer) {
+      const tokenNuevo = crypto.randomBytes(4).toString('hex');
+      await this.prisma.usuario.update({
+        where: { id: usuarioRestablecer.id },
+        data: { token: tokenNuevo },
+      });
+      this.enviarCorreoRestablecimiento(usuarioRestablecer.email, tokenNuevo);
     }
-    //Escenario 1: Envio de enlace exitoso.
-    const tokenNuevo = 'def456';
-    await this.prisma.usuario.update({
-      where: { id: usuarioRestablecer.id },
-      data: {
-        token: tokenNuevo,
-      },
-    });
-    this.enviarCorreoRestablecimiento (usuarioRestablecer.email, tokenNuevo);
-    throw new BadRequestException('“Si la dirección proporcionada pertenece a una cuenta, recibirás un enlace para restablecer tu contraseña.');
+
+    return { message: mensajeEnlace };
   }
 
   async enviarCorreoRestablecimiento(email: string, token: string) {
-    console.log(`Correo enviado a ${email} con el token: ${token}`);
+    const baseUrl = process.env.WEB_ORIGIN ?? 'http://localhost:3000';
+    console.log(
+      `Correo enviado a ${email}. Enlace: ${baseUrl}/restablecer?token=${token}`,
+    );
   }
 
- async restablecimientoContraseña(dto: RestoreContraseñaNuevaDto) { 
+ async restablecimientoContrasena(dto: RestoreContrasenaNuevaDto) { 
   const usuarioPorRestablecer = await this.prisma.usuario.findFirst({
     where: { token: dto.token },
   });
@@ -262,9 +268,9 @@ async confirmarDesbloqueo(token: string) {
   await this.prisma.usuario.update({
     where: { id: usuarioPorRestablecer.id },
     data: {
-      password: dto.passwordNueva,
-      token: null, 
-    }
+      contrasena: dto.passwordNueva,
+      token: null,
+    },
   });
   return { message: 'Restablecimiento exitoso' }; 
 }

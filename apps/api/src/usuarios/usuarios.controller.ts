@@ -1,8 +1,8 @@
 import { Controller, Post, Put, Body, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { CreatePacienteDto, LoginDto, LogoutDto } from './usuarios.dto';
-import { UpdateContraseñaDto, UpdateUsuarioDto } from './usuarios.dto';
-import { RestoreContraseñaNuevaDto, CallRestoreContraseñaDto, UnlockAccountDto } from './usuarios.dto';
+import { UpdateContrasenaDto, UpdateUsuarioDto } from './usuarios.dto';
+import { RestoreContrasenaNuevaDto, CallRestoreContrasenaDto, UnlockAccountDto } from './usuarios.dto';
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
@@ -20,29 +20,29 @@ export class UsuariosController {
 
   @Post('inicio')
   iniciar(@Body() LoginDto: LoginDto){
-    return this.usuariosService.iniciarsesion(LoginDto);
+    return this.usuariosService.iniciarSesion(LoginDto);
   }
 
   @Post('cierre')
   cerrar(@Body() LogoutDto: LogoutDto){
-    return this.usuariosService.cerrarsesion(LogoutDto);
+    return this.usuariosService.cerrarSesion(LogoutDto);
   }
 
   @Put('modificarcontraseña')
-  modificarContraseña(@Body() UpdateContraseñaDto: UpdateContraseñaDto){
-    return this.usuariosService.modificarcontraseña(UpdateContraseñaDto);
+  modificarContraseña(@Body() UpdateContrasenaDto: UpdateContrasenaDto){
+    return this.usuariosService.modificarContrasena(UpdateContrasenaDto);
   }
 
   @Put('llamadarestablecimiento')
-  restablecerContraseña(@Body() callRestoreContraseñaDto: CallRestoreContraseñaDto){
-    return this.usuariosService.callRestablecerContraseña(callRestoreContraseñaDto);
+  restablecerContraseña(@Body() callRestoreContrasenaDto: CallRestoreContrasenaDto){
+    return this.usuariosService.callRestablecerContrasena(callRestoreContrasenaDto);
   }
 
   @Put('restablecimiento')
-  restablecimiento(@Body() restoreContraseñaNuevaDto: RestoreContraseñaNuevaDto){
+  restablecimiento(@Body() restoreContrasenaNuevaDto: RestoreContrasenaNuevaDto){
     // ◄--- CORRECCIÓN 2: Quitamos el segundo parámetro duplicado (.email) 
     // y llamamos al nombre correcto del método del servicio:
-    return this.usuariosService.restablecimientoContraseña(restoreContraseñaNuevaDto);
+    return this.usuariosService.restablecimientoContrasena(restoreContrasenaNuevaDto);
   } 
 
   @Put('desbloqueo') // Cambiado a PUT porque modifica un estado existente en la BD
