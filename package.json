@@ -20,6 +20,7 @@
     "@fullcalendar/daygrid": "^6.1.20",
     "@fullcalendar/interaction": "^6.1.20",
     "@fullcalendar/react": "^6.1.20",
+    "@nestjs/jwt": "^11.0.2",
     "lucide-react": "^1.16.0",
     "sonner": "^2.0.7"
   }

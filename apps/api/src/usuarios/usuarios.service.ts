@@ -117,7 +117,7 @@ export class UsuariosService {
     }
 
     //Escenario 3 y 4: Fallido por contraseña incorrecta
-    if (usuarioIngresado.contrasena !== dto.contrasena) {
+    if (usuarioIngresado.contrasena !== dto.password) {
 
   const nuevosIntentos = usuarioIngresado.intentosFallidos + 1;
 
@@ -199,21 +199,21 @@ async confirmarDesbloqueo(token: string) {
       throw new BadRequestException('Usuario no encontrado');
     }
     //Escenario 2: Fallido por contraseña actual incorrecta.
-    if (usuarioLog.contrasena !== dto.contrasenaactual) {
+    if (usuarioLog.contrasena !== dto.passwordActual) {
       throw new BadRequestException('La contraseña actual es incorrecta');
     }
     //Escenaario 3: Fallido por contraseña nueva igual a la actual.
-    if (usuarioLog.contrasena === dto.contrasenanueva){
+    if (usuarioLog.contrasena === dto.passwordNueva){
       throw new BadRequestException('La contraseña nueva no puede ser igual a la actual');
     }
     //Escenario 4: Fallido por contraseña nueva menor a 8 caracteres.
-    if (dto.contrasenanueva.length < 8){
+    if (dto.passwordNueva.length < 8){
       throw new BadRequestException('La contraseña debe contener mínimo 8 caracteres');
     }
     await this.prisma.usuario.update({
       where: {email: dto.email },
       data: {
-        contrasena:dto.contrasenanueva,
+        password:dto.passwordNueva,
       }
     }); 
     return { message: 'Contraseña modificada correctamente' }; 
@@ -240,7 +240,7 @@ async confirmarDesbloqueo(token: string) {
   }
 
   async enviarCorreoRestablecimiento(email: string, token: string) {
-  console.log(`Correo enviado a ${email} con el token: ${token}`);
+    console.log(`Correo enviado a ${email} con el token: ${token}`);
   }
 
  async restablecimientoContraseña(dto: RestoreContraseñaNuevaDto) { 
@@ -251,18 +251,18 @@ async confirmarDesbloqueo(token: string) {
     throw new BadRequestException('El enlace de restablecimiento es inválido o ya expiró.');
   }
   // Escenario 4: Fallido por contraseñas idénticas
-  if (usuarioPorRestablecer.contrasena === dto.nuevacontraseña) {
+  if (usuarioPorRestablecer.contrasena === dto.passwordNueva) {
     throw new BadRequestException('La contraseña debe ser distinta a la actual');
   }
   // Escenario 5: Fallido por contraseña nueva menor a 8 caracteres
-  if (dto.nuevacontraseña.length < 8) {
+  if (dto.passwordNueva.length < 8) {
     throw new BadRequestException('La contraseña debe contener mínimo 8 caracteres');
   }
   // Escenario 3: Restablecimiento exitoso
   await this.prisma.usuario.update({
     where: { id: usuarioPorRestablecer.id },
     data: {
-      contrasena: dto.nuevacontraseña,
+      password: dto.passwordNueva,
       token: null, 
     }
   });
