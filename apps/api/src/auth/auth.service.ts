@@ -67,10 +67,13 @@ export class AuthService {
       message: 'Inicio de sesión exitoso',
       token: this.jwtService.sign(usuarioRegistrado),
       usuario: {
+        id: usuarioIngresado.id,
         nombre: usuarioIngresado.nombre,
         apellido: usuarioIngresado.apellido,
         email: usuarioIngresado.email,
-      }
+        dni: usuarioIngresado.dni,
+        telefono: usuarioIngresado.telefono,
+      },
     };
   }
 }
