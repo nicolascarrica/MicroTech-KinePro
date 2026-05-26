@@ -58,21 +58,9 @@ const MOCK_TURNOS: TurnoResumen[] = [
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api'
 
-async function requestTurno<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  })
-  const data = await res.json().catch(() => null)
-  if (!res.ok) {
-    const msg = data?.message ?? `Error ${res.status}`
-    throw new Error(Array.isArray(msg) ? msg.join(', ') : msg)
-  }
-  return data as T
-}
 
 export async function crearTurno(input: CrearTurnoInput): Promise<{ message: string }> {
-  return requestTurno('/turnos', {
+  return apiFetch('/turnos', {
     method: 'POST',
     body: JSON.stringify(input),
   })
@@ -103,7 +91,7 @@ export async function getTurnoById(id: number): Promise<TurnoDetalle> {
 export async function getHorariosTurnos(fecha: string): Promise<RangoHorarioBackend[]> {
   
 
-  const turnosPlanos = await requestTurno<any[]>(`/turnos?fecha=${fecha}`);
+  const turnosPlanos = await apiFetch<any[]>(`/turnos?fecha=${fecha}`);
   const turnosAgrupados = new Map<string, RangoHorarioBackend>();
 
   turnosPlanos.forEach((t) => {
@@ -138,7 +126,7 @@ export async function getHorariosTurnos(fecha: string): Promise<RangoHorarioBack
 
 export async function getDiasDisponiblesDelMes(mes: number, anio: number): Promise<number[]> {
   
-  return requestTurno<number[]>(`/turnos/dias-disponibles/${mes}/${anio}`);
+  return apiFetch<number[]>(`/turnos/dias-disponibles/${mes}/${anio}`);
 }
 
 // import type { TurnoDetalle, TurnoResumen, CrearTurnoInput } from '@/types/turno'
