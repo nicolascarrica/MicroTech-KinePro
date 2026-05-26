@@ -39,27 +39,42 @@ export default function ModificarDatosPage() {
     if (!usuario) return
 
     const form = new FormData(e.currentTarget)
+    const nombre = String(form.get('nombre') ?? '')
+    const apellido = String(form.get('apellido') ?? '')
+    const email = String(form.get('email') ?? '')
+    const dni = String(form.get('dni') ?? '')
+    const telefono = String(form.get('telefono') ?? '')
+
+    const payload: {
+      id: number
+      nombre?: string
+      apellido?: string
+      email?: string
+      dni?: string
+      telefono?: string
+    } = { id: usuario.id }
+
+    if (nombre !== usuario.nombre) payload.nombre = nombre
+    if (apellido !== usuario.apellido) payload.apellido = apellido
+    if (email !== usuario.email) payload.email = email
+    if (dni !== (usuario.dni ?? '')) payload.dni = dni
+    if (telefono !== (usuario.telefono ?? '')) payload.telefono = telefono
+
+    if (Object.keys(payload).length === 1) {
+      toast.error('No hay datos para modificar')
+      return
+    }
 
     setGuardando(true)
     try {
-      const res = await modificarDatosPersonales({
-        id: usuario.id,
-        nombre: String(form.get('nombre') ?? ''),
-        apellido: String(form.get('apellido') ?? ''),
-        email: String(form.get('email') ?? ''),
-        dni: String(form.get('dni') ?? ''),
-        telefono: String(form.get('telefono') ?? ''),
-      })
+      const res = await modificarDatosPersonales(payload)
       const actualizado = {
         ...usuario,
-        nombre: String(form.get('nombre')),
-        apellido: String(form.get('apellido')),
-        email: String(form.get('email')),
-        dni: String(form.get('dni')),
-        telefono: String(form.get('telefono')),
+        ...payload,
       }
       localStorage.setItem('kinepro_user', JSON.stringify(actualizado))
       toast.success(res.message)
+      router.push('/')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al guardar los datos'
       toast.error(msg)

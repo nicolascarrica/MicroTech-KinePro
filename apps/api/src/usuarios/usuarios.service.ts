@@ -68,36 +68,64 @@ export class UsuariosService {
   }
 
   async modificar(dto: UpdateUsuarioDto){
-    //Escenario 2: Fallido por dato/s ya registrado/s en el sistema.
-    const emailExiste = await this.prisma.usuario.findUnique({
-      where: { email: dto.email },
+    const usuarioActual = await this.prisma.usuario.findUnique({
+      where: { id: dto.id },
     });
-    if (emailExiste) {
-      throw new BadRequestException('El email ya se encuentra registrado');
+
+    if (!usuarioActual) {
+      throw new NotFoundException(`El usuario con ID ${dto.id} no existe`);
     }
-    const telefonoExiste = await this.prisma.usuario.findUnique({
-      where: { telefono: dto.telefono },
-    });
-    if (telefonoExiste) {
-      throw new BadRequestException('El teléfono ya se encuentra registrado');
+
+    if (dto.email && dto.email !== usuarioActual.email) {
+      const emailExiste = await this.prisma.usuario.findFirst({
+        where: {
+          email: dto.email,
+          NOT: { id: dto.id },
+        },
+      });
+      if (emailExiste) {
+        throw new BadRequestException('El email ya se encuentra registrado');
+      }
     }
-    const dniExiste = await this.prisma.usuario.findUnique ({
-      where: { dni: dto.dni },
-    });
-    if (dniExiste) {
-      throw new BadRequestException('El DNI ya se encuentra registrado');
+
+    if (dto.telefono && dto.telefono !== usuarioActual.telefono) {
+      const telefonoExiste = await this.prisma.usuario.findFirst({
+        where: {
+          telefono: dto.telefono,
+          NOT: { id: dto.id },
+        },
+      });
+      if (telefonoExiste) {
+        throw new BadRequestException('El teléfono ya se encuentra registrado');
+      }
     }
-    //Escenario 1: Modificacion exitosa.
-    const usuarioModificado = await this.prisma.usuario.update({
-      where: { id: dto.id }, //Esto esta mal porque significa que cualquiera
-      //puede cambiar a cualquiera ingresando un ID random. No se como arreglarlo.
-      data: {
-        email: dto.email,
-        nombre: dto.nombre,
-        apellido: dto.apellido,
-        dni: dto.dni,
-        telefono: dto.telefono,
-      },
+
+    if (dto.dni && dto.dni !== usuarioActual.dni) {
+      const dniExiste = await this.prisma.usuario.findFirst({
+        where: {
+          dni: dto.dni,
+          NOT: { id: dto.id },
+        },
+      });
+      if (dniExiste) {
+        throw new BadRequestException('El DNI ya se encuentra registrado');
+      }
+    }
+
+    const data: Record<string, unknown> = {};
+    if (dto.email && dto.email !== usuarioActual.email) data.email = dto.email;
+    if (dto.nombre && dto.nombre !== usuarioActual.nombre) data.nombre = dto.nombre;
+    if (dto.apellido && dto.apellido !== usuarioActual.apellido) data.apellido = dto.apellido;
+    if (dto.dni && dto.dni !== usuarioActual.dni) data.dni = dto.dni;
+    if (dto.telefono && dto.telefono !== usuarioActual.telefono) data.telefono = dto.telefono;
+
+    if (Object.keys(data).length === 0) {
+      return { message: 'No hay cambios para aplicar' };
+    }
+
+    await this.prisma.usuario.update({
+      where: { id: dto.id },
+      data,
     });
 
     return { message: 'Modificacion de datos exitosa' };
