@@ -25,3 +25,18 @@ export interface CrearTurnoInput {
   hora_inicio: string   // formato HH:MM
   capacidad: number
 }
+
+
+export interface Actividad {
+  id: number;
+  nombre: string;
+  cuposTotales: number;
+  cuposDisponibles: number;
+}
+
+export interface RangoHorarioBackend {
+  idTurno: number;
+  desde: string;
+  hasta: string;
+  actividades: Actividad[];
+}

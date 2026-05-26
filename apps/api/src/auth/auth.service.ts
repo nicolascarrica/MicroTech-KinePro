@@ -57,6 +57,7 @@ export class AuthService {
 
     // Esto es para el toke, es info que va con el token
     const usuarioRegistrado = { 
+      id: usuarioIngresado.id,
       dni: usuarioIngresado.dni, 
       email: usuarioIngresado.email,
       rol: usuarioIngresado.rol 
@@ -67,6 +68,7 @@ export class AuthService {
       message: 'Inicio de sesión exitoso',
       token: this.jwtService.sign(usuarioRegistrado),
       usuario: {
+        id:usuarioRegistrado.id,
         nombre: usuarioIngresado.nombre,
         apellido: usuarioIngresado.apellido,
         email: usuarioIngresado.email,

@@ -22,4 +22,10 @@ export class TurnosController {
   obtenerDetalle(@Param('id', ParseIntPipe) id: number) {
     return this.turnosService.obtenerDetalle(id);
   }
+  @Get('dias-disponibles/:mes/:anio')
+  obtenerDiasDisponibles( @Param('mes', ParseIntPipe) mes: number, @Param('anio', ParseIntPipe) anio: number ) 
+  {
+    return this.turnosService.obtenerDiasDeTurnosDisponilbles(mes, anio);
+  }
+   
 }
