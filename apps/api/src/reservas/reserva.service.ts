@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger }
 import { CreateReservaDto } from './dto/create-reserva.dto';
 import { UpdateReservaDto } from './dto/update-reserva.dto';
 import { PrismaService } from '@/prisma/prisma.service';
+import { EstadoReserva } from '@prisma/client';
 
 @Injectable()
 export class ReservaService {
@@ -92,9 +93,26 @@ export class ReservaService {
 
 }
 
-  findAll() {
-    return `This action returns all reserva`;
-  }
+  async findAll(id: number) {
+  return this.prisma.reserva.findMany({
+    where: { 
+      paciente_id: id,
+      estado: { not: EstadoReserva.CONFIRMADA }
+    },
+    include: {
+      turno: {
+        include: {
+          tipoActividad: true 
+        }
+      } 
+    }, 
+    orderBy: {
+      turno: {
+        fecha: 'desc' 
+      }
+    }
+  });
+}
 
   findOne(id: number) {
     return `This action returns a #${id} reserva`;
@@ -109,8 +127,45 @@ export class ReservaService {
     return `This action updates a #${id} reserva`;
   }
 
+
   remove(id: number) {
     return `This action removes a #${id} reserva`;
     // cancelar reservar seria
   }
+  async filtrarReservas(pacienteId: number, estado: EstadoReserva) {
+    const fechaActual = new Date();
+    const WHERE_CLAUSE: any = { 
+      paciente_id: pacienteId,
+      
+      estado: estado
+    };
+
+    
+    if (estado === EstadoReserva.CONFIRMADA) {
+      // Si está confirmada, queremos los turnos de hoy en adelante
+      WHERE_CLAUSE.turno = { fecha: { gte: fechaActual } }; 
+    } else {
+      // Si son pasadas/canceladas, queremos los anteriores a hoy
+      WHERE_CLAUSE.turno = { fecha: { lt: fechaActual } };
+    }
+
+    return this.prisma.reserva.findMany({
+      where: WHERE_CLAUSE,
+      include: {
+      turno: {
+        include: {
+          tipoActividad: true 
+        }
+      }
+    },
+      orderBy: { 
+        turno: {
+          fecha: estado === EstadoReserva.CONFIRMADA ? 'asc' : 'desc'
+        }
+        }, 
+      });
+    }
+
+
+
 }

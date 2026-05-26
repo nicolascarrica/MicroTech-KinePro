@@ -4,21 +4,29 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import ListaTurnosPendientes from '@/components/turnos/ListaTurnosPendientes'
-import { getTurnosPendientesMock } from '@/data/turnosPacienteMock'
+import { obtenerMisReservas } from '@/services/turnosPacientesService'
 
-export default function TurnosPendientesPage() {
+export default  function TurnosPendientesPage() {
   const router = useRouter()
   const [listo, setListo] = useState(false)
-
-  useEffect(() => {
+  const [turnosConfirmados, setTurnosConfirmados] = useState<any[]>([]);
+ 
+  
+  useEffect(() => { 
     if (!localStorage.getItem('kinepro_user')) {
       router.replace('/')
       return
     }
     setListo(true)
+     
   }, [router])
-
-  const turnos = getTurnosPendientesMock()
+  
+  useEffect(() => {
+    obtenerMisReservas("CONFIRMADA")
+      .then(data => setTurnosConfirmados(data))
+      .catch(err => console.error("Error al traer los turnos:", err));
+  }, []);
+  
 
   if (!listo) {
     return <p className="text-sm text-slate-500">Cargando...</p>
@@ -35,7 +43,7 @@ export default function TurnosPendientesPage() {
           Gestioná tus próximas reservas. Podés cancelar o reprogramar cada turno.
         </p>
       </div>
-      <ListaTurnosPendientes turnos={turnos} />
+      <ListaTurnosPendientes turnos={turnosConfirmados} />
     </div>
   )
 }
