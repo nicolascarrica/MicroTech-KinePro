@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import ListaTurnosPasados from '@/components/turnos/ListaTurnosPasados'
-import { getTurnosPasadosMock } from '@/data/turnosPacienteMock'
+import { obtenerMisReservasPasadas } from '@/services/turnosPacientesService'
 
 export default function TurnosPasadosPage() {
   const router = useRouter()
   const [listo, setListo] = useState(false)
+  const [turnosPasados, setTurnosPasados] = useState<any[]>([]);
 
   useEffect(() => {
     if (!localStorage.getItem('kinepro_user')) {
@@ -18,7 +19,13 @@ export default function TurnosPasadosPage() {
     setListo(true)
   }, [router])
 
-  const turnos = getTurnosPasadosMock()
+  useEffect(() => {
+    obtenerMisReservasPasadas()
+      .then(data => setTurnosPasados(data))
+      .catch(err => console.error("Error al traer los turnos:", err));
+  }, []);
+
+
 
   if (!listo) {
     return <p className="text-sm text-slate-500">Cargando...</p>
@@ -35,7 +42,7 @@ export default function TurnosPasadosPage() {
           Consultá tus turnos anteriores y el registro de asistencia.
         </p>
       </div>
-      <ListaTurnosPasados turnos={turnos} />
+      <ListaTurnosPasados turnos={turnosPasados} />
     </div>
   )
 }

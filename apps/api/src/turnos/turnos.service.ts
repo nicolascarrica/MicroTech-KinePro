@@ -116,4 +116,31 @@ export class TurnosService {
       estado: turno.estado,
     };
   }
+
+  async obtenerDiasDeTurnosDisponilbles(mes: number, anio: number): Promise<number[]> {
+  
+  const primerDia = new Date(Date.UTC(anio, mes - 1, 1));
+  const primerDiaSiguienteMes = new Date(Date.UTC(anio, mes, 1));
+
+  const turnosDelMes = await this.prisma.turno.findMany({
+    where: {
+      fecha: {
+        gte: primerDia,             // Mayor o igual al día 1 del mes
+        lt: primerDiaSiguienteMes,  // Menor estricto al día 1 del mes siguiente
+      },
+    },
+    select: {
+      fecha: true,
+      capacidad: true,
+      cantidad_inscriptos: true,
+    },
+  });
+
+  const diasConCupo = turnosDelMes
+    .filter(turno => turno.capacidad > turno.cantidad_inscriptos)
+    .map(turno => turno.fecha.getUTCDate()); 
+
+  const diasUnicos = [...new Set(diasConCupo)];
+  return diasUnicos.sort((a, b) => a - b);
+}
 }

@@ -57,6 +57,7 @@ export class AuthService {
 
     // Esto es para el toke, es info que va con el token
     const usuarioRegistrado = { 
+      id: usuarioIngresado.id,
       dni: usuarioIngresado.dni, 
       email: usuarioIngresado.email,
       rol: usuarioIngresado.rol 

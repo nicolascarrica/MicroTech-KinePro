@@ -1,5 +1,19 @@
 import { apiFetch } from '@/lib/api'
-import type { CrearTurnoInput, TurnoDetalle, TurnoResumen } from '@/types/turno'
+import type { CrearTurnoInput, RangoHorarioBackend, TurnoDetalle, TurnoResumen } from '@/types/turno'
+
+
+function extractHora(isoString: string): string {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  const h = d.getUTCHours().toString().padStart(2, '0');
+  const m = d.getUTCMinutes().toString().padStart(2, '0');
+  return `${h}:${m}`;
+}
+function calcularHoraHasta(horaDesde: string): string {
+  const [h, m] = horaDesde.split(':');
+  const proximaHora = (parseInt(h) + 1).toString().padStart(2, '0');
+  return `${proximaHora}:${m}`;
+}
 
 // --- Mock data: eliminar cuando la API esté lista ---
 const MOCK_TURNOS: TurnoResumen[] = [
@@ -63,12 +77,15 @@ export async function crearTurno(input: CrearTurnoInput): Promise<{ message: str
     body: JSON.stringify(input),
   })
 }
-
 export async function getTurnosByFecha(fecha: string): Promise<TurnoResumen[]> {
+  
   // TODO: reemplazar mock por → return apiFetch<TurnoResumen[]>(`/turnos?fecha=${fecha}`)
   void apiFetch // evita warning de import no usado hasta conectar la API
   const FECHA_CON_DATOS = '2026-05-05'
   return Promise.resolve(fecha === FECHA_CON_DATOS ? MOCK_TURNOS : [])
+
+
+  
 }
 
 export async function getTurnoById(id: number): Promise<TurnoDetalle> {
@@ -82,6 +99,46 @@ export async function getTurnoById(id: number): Promise<TurnoDetalle> {
     reservasActuales: turno.reservasActuales,
     espaciosLibres: turno.espaciosLibres,
   })
+}
+export async function getHorariosTurnos(fecha: string): Promise<RangoHorarioBackend[]> {
+  
+
+  const turnosPlanos = await requestTurno<any[]>(`/turnos?fecha=${fecha}`);
+  const turnosAgrupados = new Map<string, RangoHorarioBackend>();
+
+  turnosPlanos.forEach((t) => {
+    if ( t.espacios_libres <= 0) return;
+
+    const horaDesde = extractHora(t.hora_inicio);
+
+    // Si todavía no creamos el grupo para esta hora, lo inicializamos
+    if (!turnosAgrupados.has(horaDesde)) {
+      turnosAgrupados.set(horaDesde, {
+        idTurno: t.id,
+        desde: horaDesde,
+        hasta: calcularHoraHasta(horaDesde),
+        actividades: [],
+      });
+    }
+
+    // Metemos la actividad adentro del grupo horario correspondiente
+    turnosAgrupados.get(horaDesde)!.actividades.push({
+      id: t.id,
+      nombre: t.actividad,  
+      cuposTotales: t.capacidad,
+      cuposDisponibles: t.espacios_libres,
+    });
+  });
+
+
+  return Array.from(turnosAgrupados.values());
+ 
+  
+}
+
+export async function getDiasDisponiblesDelMes(mes: number, anio: number): Promise<number[]> {
+  
+  return requestTurno<number[]>(`/turnos/dias-disponibles/${mes}/${anio}`);
 }
 
 // import type { TurnoDetalle, TurnoResumen, CrearTurnoInput } from '@/types/turno'
