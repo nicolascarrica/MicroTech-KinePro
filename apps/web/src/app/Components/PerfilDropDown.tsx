@@ -89,7 +89,7 @@ export default function PerfilDropdown() {
                   className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium transition-colors hover:bg-slate-50 hover:text-slate-900"
                 >
                   <User className="h-4 w-4 text-slate-400" />
-                  Mi Perfil
+                  Mi perfil
                 </a>
                 <button
                   type="button"

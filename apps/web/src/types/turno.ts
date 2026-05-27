@@ -18,6 +18,9 @@ export interface TurnoDetalle {
   espaciosLibres: number
 }
 
+export interface TurnoResumenConFecha extends TurnoResumen {
+  fecha: string
+}
 
 export interface CrearTurnoInput {
   tipoActividad_id: number

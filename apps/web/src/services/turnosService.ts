@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/api'
-import type { CrearTurnoInput, RangoHorarioBackend, TurnoDetalle, TurnoResumen } from '@/types/turno'
+import type { CrearTurnoInput, RangoHorarioBackend, TurnoDetalle, TurnoResumen, TurnoResumenConFecha } from '@/types/turno'
 
 
 function extractHora(isoString: string): string {
@@ -66,14 +66,53 @@ export async function crearTurno(input: CrearTurnoInput): Promise<{ message: str
   })
 }
 export async function getTurnosByFecha(fecha: string): Promise<TurnoResumen[]> {
-  
-  // TODO: reemplazar mock por → return apiFetch<TurnoResumen[]>(`/turnos?fecha=${fecha}`)
-  void apiFetch // evita warning de import no usado hasta conectar la API
-  const FECHA_CON_DATOS = '2026-05-05'
-  return Promise.resolve(fecha === FECHA_CON_DATOS ? MOCK_TURNOS : [])
+  const data = await apiFetch<any[]>(`/turnos?fecha=${fecha}`, { omitToken: true });
+  return data.map((t) => ({
+    id: t.id,
+    horario: extractHora(t.hora_inicio),
+    actividad: t.actividad,
+    estado: t.estado,
+    capacidad: t.capacidad,
+    reservasActuales: t.cantidad_inscriptos,
+    espaciosLibres: t.espacios_libres,
+  }))
+}
 
+function fechaHoraUTC(fecha: string, horario: string): Date {
+  const [year, month, day] = fecha.split('-').map(Number);
+  const [hour, minute] = horario.split(':').map(Number);
+  return new Date(Date.UTC(year, month - 1, day, hour, minute, 0, 0));
+}
 
-  
+export async function getTurnosProximos(
+  cantidad = 3,
+  diasMaximos = 14,
+): Promise<TurnoResumenConFecha[]> {
+  const resultados: TurnoResumenConFecha[] = [];
+  const hoy = new Date();
+  const hoyUtc = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), hoy.getUTCDate(), hoy.getUTCHours(), hoy.getUTCMinutes(), hoy.getUTCSeconds(), hoy.getUTCMilliseconds()));
+
+  let fechaActual = new Date(hoyUtc);
+  for (let dia = 0; dia < diasMaximos && resultados.length < cantidad; dia += 1) {
+    const fechaStr = fechaActual.toISOString().slice(0, 10);
+    const turnosDelDia = await getTurnosByFecha(fechaStr);
+
+    const turnosFiltrados = turnosDelDia
+      .filter((turno) => {
+        if (dia === 0) {
+          const turnoDate = fechaHoraUTC(fechaStr, turno.horario);
+          return turnoDate.getTime() >= hoyUtc.getTime();
+        }
+        return true;
+      })
+      .sort((a, b) => a.horario.localeCompare(b.horario))
+      .map((turno) => ({ ...turno, fecha: fechaStr }));
+
+    resultados.push(...turnosFiltrados.slice(0, cantidad - resultados.length));
+    fechaActual.setUTCDate(fechaActual.getUTCDate() + 1);
+  }
+
+  return resultados;
 }
 
 export async function getTurnoById(id: number): Promise<TurnoDetalle> {
