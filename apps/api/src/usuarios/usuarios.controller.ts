@@ -1,12 +1,16 @@
-import { Controller, Post, Put, Body, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Post, Put, Body, Get, Param, ParseIntPipe, Patch } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
-import { CreatePacienteDto, LoginDto, LogoutDto } from './usuarios.dto';
+import { AsignarRolDto, CreatePacienteDto, LoginDto, LogoutDto } from './usuarios.dto';
 import { UpdateContrasenaDto, UpdateUsuarioDto } from './usuarios.dto';
 import { RestoreContrasenaNuevaDto, CallRestoreContrasenaDto, UnlockAccountDto } from './usuarios.dto';
+import { Public } from '@/auth/public.decorator';
+import { Roles } from '@/auth/roles.decorator';
+
 @Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
+  @Public() // Permite el acceso sin autenticación a esta ruta
   @Post('registro')
   registrar(@Body() createPacienteDto: CreatePacienteDto) {
     return this.usuariosService.registrar(createPacienteDto);
@@ -18,6 +22,7 @@ export class UsuariosController {
     return this.usuariosService.modificar(UpdateUsuarioDto);
   }
 
+  @Public() // Permite el acceso sin autenticación a esta ruta
   @Post('inicio')
   iniciar(@Body() LoginDto: LoginDto){
     return this.usuariosService.iniciarSesion(LoginDto);
@@ -33,11 +38,13 @@ export class UsuariosController {
     return this.usuariosService.modificarContrasena(UpdateContrasenaDto);
   }
 
+  @Public() // Permite el acceso sin autenticación a esta ruta
   @Put('llamadarestablecimiento')
   restablecerContraseña(@Body() callRestoreContrasenaDto: CallRestoreContrasenaDto){
     return this.usuariosService.callRestablecerContrasena(callRestoreContrasenaDto);
   }
 
+  @Public() // Permite el acceso sin autenticación a esta ruta
   @Put('restablecimiento')
   restablecimiento(@Body() restoreContrasenaNuevaDto: RestoreContrasenaNuevaDto){
     // ◄--- CORRECCIÓN 2: Quitamos el segundo parámetro duplicado (.email) 
@@ -45,18 +52,29 @@ export class UsuariosController {
     return this.usuariosService.restablecimientoContrasena(restoreContrasenaNuevaDto);
   } 
 
+  @Public() // Permite el acceso sin autenticación a esta ruta
   @Put('desbloqueo') // Cambiado a PUT porque modifica un estado existente en la BD
   desbloquear(@Body() unlockAccountDto: UnlockAccountDto){
     return this.usuariosService.confirmarDesbloqueo(unlockAccountDto.token);
   }
 
+  @Roles('OWNER', 'ADMIN')
   @Get()
   obtenerTodos() {
     return this.usuariosService.obtenerTodos();
   }
-
+  @Roles('OWNER', 'ADMIN')
   @Get(':id')
   obtenerPorId(@Param('id', ParseIntPipe) id: number) {
     return this.usuariosService.obtenerPorId(id);
+  }
+
+  @Roles('OWNER')
+  @Patch(':id/rol')
+  asignarRol(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: AsignarRolDto,
+  ) {
+    return this.usuariosService.asignarRol(id, dto);
   }
 }

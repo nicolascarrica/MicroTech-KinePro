@@ -1,5 +1,6 @@
+import { RolUsuario } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsString, IsEmail, IsDate, MinLength, IsInt, IsOptional } from 'class-validator';
+import { IsString, IsEmail, IsDate, MinLength, IsInt, IsOptional, IsNotEmpty, IsEnum } from 'class-validator';
 
 // 1. EL DTO BASE
 // (Solo los campos de la tabla Usuario, tanto para Paciente como Administrador)
@@ -97,4 +98,12 @@ export class RestoreContrasenaNuevaDto {
 export class UnlockAccountDto {
   @IsString({ message: 'El token debe ser una cadena de texto' })
   token!: string;
+}
+
+export class AsignarRolDto {
+  @IsNotEmpty({ message: 'El rol es obligatorio' })
+  @IsEnum(RolUsuario, {
+    message: 'El rol debe ser uno de: OWNER, ADMIN, PACIENTE, KINESIOLOGO',
+  })
+  rol!: RolUsuario;
 }

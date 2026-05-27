@@ -5,27 +5,27 @@ import { UpdateReservaDto } from './dto/update-reserva.dto';
 import { ReservaService } from './reserva.service';
 import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
 import { EstadoReserva } from '@prisma/client';
+import { Roles } from '@/auth/roles.decorator';
 
 @Controller('reserva')
 export class ReservaController {
   constructor(private readonly reservaService: ReservaService) {}
 
-  
-  @UseGuards(JwtAuthGuard)
+  @Roles('PACIENTE')
   @Post('crear')
   create(@Req() req, @Body() createReservaDto: CreateReservaDto) {
     const pacienteId = req.user.id;
     return this.reservaService.create(createReservaDto, pacienteId);
   }
 
- @UseGuards(JwtAuthGuard)
+  @Roles('PACIENTE')
   @Get('')
   findAll(@Req() req) {
     const pacienteId = req.user.id;
     return this.reservaService.findAll(pacienteId);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @Roles('PACIENTE')
   @Get('mis-reservas')
   async getReservasFiltro(@Req() req, @Query('estado') estado:EstadoReserva = EstadoReserva.PENDIENTE)
   {

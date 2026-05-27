@@ -1,11 +1,13 @@
 import { Controller, Post, Body, Get, Query, Param, ParseIntPipe } from '@nestjs/common';
 import { TurnosService } from './turnos.service';
 import { CreateTurnoDto, ListarTurnosDto } from './turnos.dto';
+import { Roles } from '@/auth/roles.decorator';
 
 @Controller('turnos')
 export class TurnosController {
   constructor(private readonly turnosService: TurnosService) {}
 
+  @Roles('OWNER', 'ADMIN')
   @Post()
   crear(@Body() createTurnoDto: CreateTurnoDto) {
     return this.turnosService.crear(createTurnoDto);
