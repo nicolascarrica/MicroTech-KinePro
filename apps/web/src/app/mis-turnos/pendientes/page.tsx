@@ -8,7 +8,6 @@ import { useAuth, useRequireRole } from '@/hooks/useAuth'
 
 export default function TurnosPendientesPage() {
   const { autorizado, cargando } = useRequireRole(['PACIENTE'])
-  const { rol } = useAuth()
   const [turnosConfirmados, setTurnosConfirmados] = useState<any[]>([])
 
   const refresh = async () => {
@@ -25,9 +24,6 @@ export default function TurnosPendientesPage() {
   if (cargando) return <p className="p-6 text-sm text-slate-500">Cargando...</p>
   
   if (!autorizado) {
-    // Primero hacemos el log (fijate que agregué 'rol' para que veas qué valor exacto tiene)
-    console.log("No está autorizado. El rol actual es:", rol);
-    // Y devolvemos null para que React no se queje
     return null; 
   }
   

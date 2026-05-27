@@ -35,14 +35,14 @@ export class ReservaService {
   }
 
   async create(createReservaDto: CreateReservaDto, pacienteId: number) {
-  // 1. Buscamos el turno
-  const turno = await this.prisma.turno.findUnique({
-    where: { id: createReservaDto.turno_id },
-  });
+    // 1. Buscamos el turno
+    const turno = await this.prisma.turno.findUnique({
+      where: { id: createReservaDto.turno_id },
+    });
 
-  if (!turno) {
-    throw new BadRequestException('El turno especificado no existe');
-  }
+    if (!turno) {
+      throw new BadRequestException('El turno especificado no existe');
+    }
 
   // CORRECCIÓN 1: Validamos según los inscriptos actuales vs la capacidad total
   if (turno.cantidad_inscriptos >= turno.capacidad) {
@@ -57,92 +57,87 @@ export class ReservaService {
     throw new BadRequestException('No se puede reservar un turno en el pasado o que ya comenzó');
   }
 
-  // 2. Validamos la actividad
-  const actividad = await this.prisma.tipoActividad.findUnique({
-    where: { id: turno.tipoActividad_id },
-  });
+    // 2. Validamos la actividad
+    const actividad = await this.prisma.tipoActividad.findUnique({
+      where: { id: turno.tipoActividad_id },
+    });
 
-  if (!actividad) {
-    throw new BadRequestException('Debe seleccionar una actividad');
-  }
+    if (!actividad) {
+      throw new BadRequestException('Debe seleccionar una actividad');
+    }
 
-  
-  const tieneReserva = await this.prisma.reserva.findFirst({
-    where: {
-      paciente_id: pacienteId, 
-      turno: {
-        fecha: turno.fecha,
-      },
-    },
-  });
-
-  if (tieneReserva) {
-    throw new BadRequestException(
-      'El paciente ya posee un turno para una actividad en el día y horario seleccionado',
-    );
-  }
-
-  // transaccion para poder evitar inconsistencias en la base de datos
-  try {
-
-  await this.prisma.$transaction(async (tx) => {
-    
-   
-    await tx.reserva.create({
-      data: {
-        estado: 'CONFIRMADA',         
+    const tieneReserva = await this.prisma.reserva.findFirst({
+      where: {
+        paciente_id: pacienteId, 
         turno: {
-          connect: { id: createReservaDto.turno_id }
+          fecha: turno.fecha,
         },
-        paciente: {
-          connect: { id: pacienteId }
-        }
       },
     });
 
-    await tx.turno.update({
-      where: { id: createReservaDto.turno_id },
-      data: {
-        cantidad_inscriptos: { increment: 1 } 
-      },
-    });
+    if (tieneReserva) {
+      throw new BadRequestException(
+        'El paciente ya posee un turno para una actividad en el día y horario seleccionado',
+      );
+    }
 
-    //Acá iría la lógica del pago...
-  });
+    // transaccion para poder evitar inconsistencias en la base de datos
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.reserva.create({
+          data: {
+            estado: 'CONFIRMADA',        
+            turno: {
+              connect: { id: createReservaDto.turno_id }
+            },
+            paciente: {
+              connect: { id: pacienteId }
+            }
+          },
+        });
 
-  return {
-    message: 'Reserva exitosa',
-  };
+        await tx.turno.update({
+          where: { id: createReservaDto.turno_id },
+          data: {
+            cantidad_inscriptos: { increment: 1 } 
+          },
+        });
 
-} catch (error)  
-  {
-    this.logger.error(`Error al procesar la transacción de la reserva: ${String(error)}`);
+        // Acá iría la lógica del pago...
+      });
+
+      return {
+        message: 'Reserva exitosa',
+      };
+
+    } catch (error) {
+      this.logger.error(`Error al procesar la transacción de la reserva: ${String(error)}`);
+      throw new InternalServerErrorException(
+        'Ocurrió un error inesperado al procesar la reserva. Ningún cobro fue realizado. Por favor, intente nuevamente más tarde.'
+      );
+    }
   }
-  throw new InternalServerErrorException
-  ( 'Ocurrió un error inesperado al procesar la reserva. Ningún cobro fue realizado. Por favor, intente nuevamente más tarde.' );
-
-}
 
   async findAll(id: number) {
-  return this.prisma.reserva.findMany({
-    where: { 
-      paciente_id: id,
-      estado: { not: EstadoReserva.CONFIRMADA }
-    },
-    include: {
-      turno: {
-        include: {
-          tipoActividad: true 
+    return this.prisma.reserva.findMany({
+      where: { 
+        paciente_id: id,
+        estado: { not: EstadoReserva.CONFIRMADA }
+      },
+      include: {
+        turno: {
+          include: {
+            tipoActividad: true 
+          }
+        } 
+      }, 
+      orderBy: {
+        turno: {
+          fecha: 'desc' 
         }
-      } 
-    }, 
-    orderBy: {
-      turno: {
-        fecha: 'desc' 
       }
-    }
-  });
-}
+    });
+  }
 
   async findHistorial(pacienteId: number) {
     const hoy = new Date();
@@ -325,15 +320,14 @@ export class ReservaService {
     return { message: 'Reserva cancelada', puedeReprogramar };
     // NOTA: mantenemos el registro (no hard delete)
   }
+
   async filtrarReservas(pacienteId: number, estado: EstadoReserva) {
     const fechaActual = new Date();
     const WHERE_CLAUSE: any = { 
       paciente_id: pacienteId,
-      
       estado: estado
     };
 
-    
     if (estado === EstadoReserva.CONFIRMADA) {
       // Si está confirmada, queremos los turnos de hoy en adelante
       WHERE_CLAUSE.turno = { fecha: { gte: fechaActual } }; 
@@ -345,20 +339,130 @@ export class ReservaService {
     return this.prisma.reserva.findMany({
       where: WHERE_CLAUSE,
       include: {
-      turno: {
-        include: {
-          tipoActividad: true 
+        turno: {
+          include: {
+            tipoActividad: true 
+          }
         }
-      }
-    },
+      },
       orderBy: { 
         turno: {
           fecha: estado === EstadoReserva.CONFIRMADA ? 'asc' : 'desc'
         }
-        }, 
-      });
+      }, 
+    });
+  }
+
+  
+  async crearReservaFija(pacienteId: number, turnoInicialId: number, fechasString: string[]) {
+   
+
+
+
+    const turnoBase = await this.prisma.turno.findUnique({
+      where: { id: turnoInicialId },
+    });
+
+    if (!turnoBase) {
+      throw new BadRequestException('El turno inicial seleccionado no existe');
+    }
+    // 2. Buscar en la BD todos los turnos que coincidan con las fechas, horario y actividad
+    // (Ajustá "actividad_id" y "hora_inicio" según cómo se llamen en tu schema.prisma)
+    const turnos = await this.prisma.turno.findMany({
+      where: {
+        tipoActividad_id: turnoBase.tipoActividad_id,
+        hora_inicio: turnoBase.hora_inicio, 
+        // Convertimos los strings del front a Date para Prisma
+        fecha: { in: fechasString.map(fecha => new Date(fecha)) }, 
+      },
+    });
+
+    //Validar que el administrador haya creado esos turnos en el sistema
+    if (turnos.length !== fechasString.length) {
+      throw new BadRequestException('No hay turnos programados en el sistema para todas las fechas solicitadas en ese horario');
     }
 
+    // Extraemos los IDs de los turnos que encontramos para usarlos en tu lógica
+    const turnosIds = turnos.map(t => t.id);
 
+    //Escenario 4: Validar capacidad para todos los turnos
+    const turnosSinCupo = turnos.filter(t => t.cantidad_inscriptos >= t.capacidad);
+    if (turnosSinCupo.length > 0) {
+      throw new BadRequestException('No se encuentra disponibilidad de días para la fecha seleccionada');
+    }
+
+    // Escenario 5: Validar si el paciente ya tiene reserva en esas fechas exactas
+
+    const where_condition = EstadoReserva.CONFIRMADA || EstadoReserva.PENDIENTE
+    const fechasTurnos = turnos.map(t => t.fecha);
+    const reservaExistente = await this.prisma.reserva.findFirst({
+      where: {
+        paciente_id: pacienteId,
+        turno: { fecha: { in: fechasTurnos } },
+        estado:  where_condition   
+      }
+    });
+
+    if (reservaExistente) {
+      throw new BadRequestException('El paciente ya posee un turno para una actividad en el día y horario seleccionado');
+    }
+
+    //Escenario 1, 2 y 3: Calcular el descuento
+    const ausencias = await this.prisma.reserva.count({
+      where: { paciente_id: pacienteId, estado: EstadoReserva.AUSENTE },
+    });
+
+    // Buscar cuántas reprogramaciones tiene en su historial
+    const reservasConReprogramacion = await this.prisma.reserva.findMany({
+      where: { paciente_id: pacienteId, cant_reprogramaciones: { gt: 0 } },
+      select: { cant_reprogramaciones: true }
+    });
+    
+    const totalReprogramaciones = reservasConReprogramacion.reduce((acc, curr) => acc + curr.cant_reprogramaciones, 0);
+
+    const aplicaDescuento = ausencias < 2 && totalReprogramaciones < 2;
+    const porcentajeDescuento = aplicaDescuento ? 20 : 0;
+
+    //Escenario 6 
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        
+        // Armamos el array de datos para crear múltiples reservas en bloque
+        const reservasData = turnosIds.map(turnoId => ({
+          paciente_id: pacienteId,
+          turno_id: turnoId,
+          estado: EstadoReserva.CONFIRMADA, 
+        }));
+
+        await tx.reserva.createMany({
+          data: reservasData,
+        });
+
+        // Actualizamos los inscriptos de los turnos seleccionados
+        for (const turnoId of turnosIds) {
+          await tx.turno.update({
+            where: { id: turnoId },
+            data: { cantidad_inscriptos: { increment: 1 } },
+          });
+        }
+
+        // ACÁ IRÍA LA LÓGICA DEL PAGO (redirige, genera el link, etc).
+        // Si el pago falla o da error la promesa del pago, se lanza un throw Error, 
+        // lo que hace que Prisma cancele esta transacción (rollback automático).
+      });
+
+      return {
+        message: 'Reserva exitosa',
+        descuentoAplicado: `${porcentajeDescuento}%`,
+        cantidadTurnos: turnosIds.length
+      };
+
+    } catch (error) {
+      this.logger.error(`Error al procesar la reserva fija: ${String(error)}`);
+      throw new InternalServerErrorException(
+        'Ocurrió un error inesperado al procesar la reserva. Ningún cobro fue realizado. Por favor, intente nuevamente más tarde.'
+      );
+    }
+  }
 
 }

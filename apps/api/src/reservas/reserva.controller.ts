@@ -3,7 +3,6 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UseGuards, Quer
 import { CreateReservaDto } from './dto/create-reserva.dto';
 import { UpdateReservaDto } from './dto/update-reserva.dto';
 import { ReservaService } from './reserva.service';
-import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
 import { EstadoReserva } from '@prisma/client';
 import { Roles } from '@/auth/roles.decorator';
 
@@ -16,6 +15,12 @@ export class ReservaController {
   create(@Req() req, @Body() createReservaDto: CreateReservaDto) {
     const pacienteId = req.user.id;
     return this.reservaService.create(createReservaDto, pacienteId);
+  }
+  @Roles('PACIENTE')
+  @Post('fija')
+  crearFija(@Req() req, @Body() body: {turnoInicialId:number, fechas: string[] }) {
+    const pacienteId = req.user.id;
+    return this.reservaService.crearReservaFija(pacienteId,body.turnoInicialId, body.fechas);
   }
 
   @Roles('PACIENTE')
