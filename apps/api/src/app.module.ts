@@ -7,7 +7,9 @@ import { AuthModule } from './auth/auth.module';
 import { ActividadesModule } from './actividades/actividades.module';
 import { TurnosModule } from './turnos/turnos.module';
 import { ReservaModule } from './reservas/reserva.module';
-
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { RolesGuard } from './auth/roles.guard';
 
 @Module({
   imports: [
@@ -20,6 +22,15 @@ import { ReservaModule } from './reservas/reserva.module';
     TurnosModule,
     ReservaModule,
   ],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule {}

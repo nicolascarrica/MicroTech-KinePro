@@ -74,6 +74,7 @@ export class AuthService {
         email: usuarioIngresado.email,
         dni: usuarioIngresado.dni,
         telefono: usuarioIngresado.telefono,
+        rol: usuarioIngresado.rol,
       },
     };
   }

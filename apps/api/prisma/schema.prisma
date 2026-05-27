@@ -21,6 +21,7 @@ enum RolUsuario {
   ADMIN
   PACIENTE
   KINESIOLOGO
+  OWNER
 }
 
 enum TipoPlan {

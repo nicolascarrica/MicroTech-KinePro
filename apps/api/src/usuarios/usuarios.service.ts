@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreatePacienteDto, LogoutDto, LoginDto, CallRestoreContrasenaDto } from './usuarios.dto';
+import { CreatePacienteDto, LogoutDto, LoginDto, CallRestoreContrasenaDto, AsignarRolDto } from './usuarios.dto';
 import { UpdateUsuarioDto,UpdateContrasenaDto, UnlockAccountDto, RestoreContrasenaNuevaDto } from './usuarios.dto';
 import crypto from 'crypto';
 
@@ -345,6 +345,23 @@ export class UsuariosService {
     }
 
     return { data: usuario };
+  }
+
+  async asignarRol(id: number, dto: AsignarRolDto) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    await this.prisma.usuario.update({
+      where: { id },
+      data: { rol: dto.rol },
+    });
+
+    return { message: `Rol "${dto.rol}" asignado correctamente a ${usuario.email}` };
   }
 
 }
