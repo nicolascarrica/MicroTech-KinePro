@@ -26,21 +26,28 @@ export default function TablaUsuarios() {
   useEffect(() => {
     const cargarUsuarios = async () => {
       try {
-        const respuesta = await fetch(`${API}/usuarios`);
-        
+        const token = localStorage.getItem('kinepro_token');
+        const respuesta = await fetch(`${API}/usuarios`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+      
+        const json = await respuesta.json().catch(() => null);
+      
         if (!respuesta.ok) {
-          throw new Error('Error al cargar los usuarios');
+          const msg = json?.message ?? 'Error al cargar los usuarios';
+          throw new Error(Array.isArray(msg) ? msg.join(', ') : msg);
         }
-
-        const json = await respuesta.json();
+      
         setUsuarios(json.data || []);
-        
       } catch (e: any) {
         setError(e.message);
-        setUsuarios([]); 
+        setUsuarios([]);
         toast.error('Error de servidor', { description: e.message });
       } finally {
-        setCargando(false); 
+        setCargando(false);
       }
     };
     cargarUsuarios();

@@ -6,37 +6,26 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { modificarDatosPersonales } from '@/services/usuariosService'
-
-type UsuarioSesion = {
-  id: number
-  nombre: string
-  apellido: string
-  email: string
-  dni?: string
-  telefono?: string
-}
+import { useRequireRole, UsuarioSesion } from '@/hooks/useAuth'
 
 export default function ModificarDatosPage() {
   const router = useRouter()
-  const [usuario, setUsuario] = useState<UsuarioSesion | null>(null)
+  const { usuario, autorizado, cargando } = useRequireRole(['ADMIN', 'OWNER', 'PACIENTE']) as any
+  const [datosUsuario, setDatosUsuario] = useState<UsuarioSesion | null>(null)
   const [guardando, setGuardando] = useState(false)
 
   useEffect(() => {
+    if (!autorizado) return
     const raw = localStorage.getItem('kinepro_user')
-    if (!raw) {
-      router.replace('/')
-      return
-    }
-    setUsuario(JSON.parse(raw) as UsuarioSesion)
-  }, [router])
+    if (raw) setDatosUsuario(JSON.parse(raw))
+  }, [autorizado])
 
-  if (!usuario) {
-    return <p className="text-sm text-slate-500">Cargando...</p>
-  }
+  if (cargando) return <p className="p-6 text-sm text-slate-500">Cargando...</p>
+  if (!autorizado || !datosUsuario) return null
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (!usuario) return
+    if (!datosUsuario) return
 
     const form = new FormData(e.currentTarget)
     const nombre = String(form.get('nombre') ?? '')
@@ -52,13 +41,13 @@ export default function ModificarDatosPage() {
       email?: string
       dni?: string
       telefono?: string
-    } = { id: usuario.id }
+    } = { id: datosUsuario.id }
 
-    if (nombre !== usuario.nombre) payload.nombre = nombre
-    if (apellido !== usuario.apellido) payload.apellido = apellido
-    if (email !== usuario.email) payload.email = email
-    if (dni !== (usuario.dni ?? '')) payload.dni = dni
-    if (telefono !== (usuario.telefono ?? '')) payload.telefono = telefono
+    if (nombre !== datosUsuario.nombre) payload.nombre = nombre
+    if (apellido !== datosUsuario.apellido) payload.apellido = apellido
+    if (email !== datosUsuario.email) payload.email = email
+    if (dni !== (datosUsuario.dni ?? '')) payload.dni = dni
+    if (telefono !== (datosUsuario.telefono ?? '')) payload.telefono = telefono
 
     if (Object.keys(payload).length === 1) {
       toast.error('No hay datos para modificar')
@@ -68,10 +57,7 @@ export default function ModificarDatosPage() {
     setGuardando(true)
     try {
       const res = await modificarDatosPersonales(payload)
-      const actualizado = {
-        ...usuario,
-        ...payload,
-      }
+      const actualizado = { ...datosUsuario, ...payload }
       localStorage.setItem('kinepro_user', JSON.stringify(actualizado))
       toast.success(res.message)
       router.push('/')
@@ -95,7 +81,7 @@ export default function ModificarDatosPage() {
               <label className="mb-1 block text-sm font-medium text-slate-700">Nombre</label>
               <input
                 name="nombre"
-                defaultValue={usuario.nombre}
+                defaultValue={datosUsuario.nombre}
                 required
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
               />
@@ -104,7 +90,7 @@ export default function ModificarDatosPage() {
               <label className="mb-1 block text-sm font-medium text-slate-700">Apellido</label>
               <input
                 name="apellido"
-                defaultValue={usuario.apellido}
+                defaultValue={datosUsuario.apellido}
                 required
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
               />
@@ -115,7 +101,7 @@ export default function ModificarDatosPage() {
             <input
               name="email"
               type="email"
-              defaultValue={usuario.email}
+              defaultValue={datosUsuario.email}
               required
               className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
             />
@@ -125,7 +111,7 @@ export default function ModificarDatosPage() {
               <label className="mb-1 block text-sm font-medium text-slate-700">DNI</label>
               <input
                 name="dni"
-                defaultValue={usuario.dni ?? ''}
+                defaultValue={datosUsuario.dni ?? ''}
                 required
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
               />
@@ -134,7 +120,7 @@ export default function ModificarDatosPage() {
               <label className="mb-1 block text-sm font-medium text-slate-700">Teléfono</label>
               <input
                 name="telefono"
-                defaultValue={usuario.telefono ?? ''}
+                defaultValue={datosUsuario.telefono ?? ''}
                 required
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
               />

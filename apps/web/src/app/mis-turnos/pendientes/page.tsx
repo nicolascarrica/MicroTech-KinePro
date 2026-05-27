@@ -2,35 +2,23 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import ListaTurnosPendientes from '@/components/turnos/ListaTurnosPendientes'
 import { obtenerMisReservas } from '@/services/turnosPacientesService'
+import { useRequireRole } from '@/hooks/useAuth'
 
-export default  function TurnosPendientesPage() {
-  const router = useRouter()
-  const [listo, setListo] = useState(false)
-  const [turnosConfirmados, setTurnosConfirmados] = useState<any[]>([]);
- 
-  
-  useEffect(() => { 
-    if (!localStorage.getItem('kinepro_user')) {
-      router.replace('/')
-      return
-    }
-    setListo(true)
-     
-  }, [router])
-  
+export default function TurnosPendientesPage() {
+  const { autorizado, cargando } = useRequireRole(['PACIENTE'])
+  const [turnosConfirmados, setTurnosConfirmados] = useState<any[]>([])
+
   useEffect(() => {
-    obtenerMisReservas("CONFIRMADA")
-      .then(data => setTurnosConfirmados(data))
-      .catch(err => console.error("Error al traer los turnos:", err));
-  }, []);
-  
+    if (!autorizado) return
+    obtenerMisReservas('CONFIRMADA')
+      .then((data) => setTurnosConfirmados(data))
+      .catch((err) => console.error('Error al traer los turnos:', err))
+  }, [autorizado])
 
-  if (!listo) {
-    return <p className="text-sm text-slate-500">Cargando...</p>
-  }
+  if (cargando) return <p className="p-6 text-sm text-slate-500">Cargando...</p>
+  if (!autorizado) return null
 
   return (
     <div className="mx-auto w-full max-w-2xl">
