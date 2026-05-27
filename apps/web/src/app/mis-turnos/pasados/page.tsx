@@ -2,34 +2,23 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import ListaTurnosPasados from '@/components/turnos/ListaTurnosPasados'
 import { obtenerMisReservasPasadas } from '@/services/turnosPacientesService'
+import { useRequireRole } from '@/hooks/useAuth'
 
 export default function TurnosPasadosPage() {
-  const router = useRouter()
-  const [listo, setListo] = useState(false)
-  const [turnosPasados, setTurnosPasados] = useState<any[]>([]);
+  const { autorizado, cargando } = useRequireRole(['PACIENTE'])
+  const [turnosPasados, setTurnosPasados] = useState<any[]>([])
 
   useEffect(() => {
-    if (!localStorage.getItem('kinepro_user')) {
-      router.replace('/')
-      return
-    }
-    setListo(true)
-  }, [router])
-
-  useEffect(() => {
+    if (!autorizado) return
     obtenerMisReservasPasadas()
-      .then(data => setTurnosPasados(data))
-      .catch(err => console.error("Error al traer los turnos:", err));
-  }, []);
+      .then((data) => setTurnosPasados(data))
+      .catch((err) => console.error('Error al traer los turnos:', err))
+  }, [autorizado])
 
-
-
-  if (!listo) {
-    return <p className="text-sm text-slate-500">Cargando...</p>
-  }
+  if (cargando) return <p className="p-6 text-sm text-slate-500">Cargando...</p>
+  if (!autorizado) return null
 
   return (
     <div className="mx-auto w-full max-w-2xl">

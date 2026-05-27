@@ -8,11 +8,14 @@ import { getTurnosByFecha, getTurnoById } from '@/services/turnosService'
 import type { TurnoResumen, TurnoDetalle } from '@/types/turno'
 import CrearTurnoModal from '@/components/turnos/CrearTurnoModal'
 import { Plus } from 'lucide-react'
+import { useRequireRole } from '@/hooks/useAuth'
 
 // FullCalendar no soporta SSR → carga dinámica solo en cliente
 const CalendarioTurnos = dynamic(() => import('@/components/turnos/CalendarioTurnos'), { ssr: false })
 
 export default function TurnosPage() {
+  const { autorizado, cargando } = useRequireRole(['ADMIN', 'OWNER'])
+
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string | null>(null)
   const [turnos, setTurnos] = useState<TurnoResumen[]>([])
   const [loadingTurnos, setLoadingTurnos] = useState(false)
@@ -49,6 +52,9 @@ export default function TurnosPage() {
     setTurnoDetalle(null)
     setLoadingDetalle(false)
   }
+
+  if (cargando) return <p className="p-6 text-slate-500">Cargando...</p>
+  if (!autorizado) return null
 
   return (
     <main className="min-h-screen bg-neutral-bg/40 p-6">
