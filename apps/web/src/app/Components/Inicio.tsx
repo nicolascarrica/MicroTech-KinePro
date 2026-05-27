@@ -41,7 +41,7 @@ export default function Inicio() {
       localStorage.setItem('kinepro_token', resultado.token);
       localStorage.setItem('kinepro_user', JSON.stringify(resultado.usuario));
 
-      toast.success('¡Inicio de sesión exitoso!', {
+      toast.success('Inicio de sesión exitoso', {
         description: `Hola de nuevo, ${resultado.usuario.nombre}.`,
       });
 
@@ -128,7 +128,7 @@ export default function Inicio() {
               onClick={() => { setIsLoginOpen(true); }}
               className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 py-2.5 rounded-xl transition-all shadow-sm"
             >
-              Iniciar Sesión
+              Iniciar sesión
             </button>
           </div>
       </section>
@@ -144,11 +144,11 @@ export default function Inicio() {
               ✕
             </button>
 
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Iniciar Sesión</h3>
+            <h3 className="text-lg font-bold text-slate-800 mb-4">Iniciar sesión</h3>
 
             <form onSubmit={manejarLogin} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Correo electrónico</label>
                 <input type="email" name="email" required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="ejemplo@kinepro.com" />
               </div>
 
@@ -199,13 +199,13 @@ export default function Inicio() {
                   <input type="text" name="telefono" required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="221123456" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Nacimiento</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Fecha de nacimiento</label>
                   <input type="date" name="fechaNacimiento" required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Correo electrónico</label>
                 <input type="email" name="email" required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="ejemplo@kinepro.com" />
               </div>
 
@@ -214,7 +214,7 @@ export default function Inicio() {
                 <input type="password" name="password" required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="••••••••" />
               </div>
 
-              <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-xl transition-colors mt-2">Crear Cuenta</button>
+              <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-xl transition-colors mt-2">Crear cuenta</button>
             </form>
           </div>
         </div>

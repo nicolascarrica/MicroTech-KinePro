@@ -160,7 +160,7 @@ export default function PanelMensual({
                 <ArrowLeft className="w-4 h-4" /> Volver
               </button>
               
-              <h3 className="text-lg font-bold text-slate-800 mb-4">Resumen de la Reserva</h3>
+              <h3 className="text-lg font-bold text-slate-800 mb-4">Resumen de la reserva</h3>
               
               <div className="bg-teal-50 border border-teal-100 rounded-xl p-4 mb-4">
                 <p className="text-teal-800 font-semibold mb-1">{actividadSeleccionada?.nombre}</p>
@@ -183,7 +183,7 @@ export default function PanelMensual({
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 mt-auto mb-6 shadow-sm">
                 <TicketPercent className="w-6 h-6 text-amber-500 shrink-0" />
                 <div>
-                  <p className="text-amber-800 text-sm font-bold">20% de Descuento</p>
+                  <p className="text-amber-800 text-sm font-bold">20% de descuento</p>
                   <p className="text-amber-700 text-xs mt-0.5">Sujeto a validación de asistencia previa al momento del pago.</p>
                 </div>
               </div>
@@ -193,7 +193,7 @@ export default function PanelMensual({
                 className="w-full py-3 px-4 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 bg-teal-600 text-white hover:bg-teal-700 active:scale-[0.98]"
               >
                 <CheckCircle2 className="w-5 h-5" />
-                <span>Confirmar {fechasCalculadas.length} Turnos</span>
+                <span>Confirmar {fechasCalculadas.length} turnos</span>
               </button>
             </motion.div>
           )}

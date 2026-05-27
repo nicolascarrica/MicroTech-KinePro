@@ -143,7 +143,7 @@ export class UsuariosService {
 
     // Escenario 5: Fallido por cuenta bloqueada
     if (usuarioIngresado.bloqueado) {
-      throw new BadRequestException('La cuenta se encuentra bloqueada');
+      throw new BadRequestException('La cuenta se encuentra bloqueada.');
     }
 
     //Escenario 3 y 4: Fallido por contraseña incorrecta
@@ -171,7 +171,7 @@ export class UsuariosService {
     
         this.desbloquearCuentaEmail(nuevoToken);
         throw new BadRequestException(
-          'Contraseña incorrecta. La cuenta fue bloqueada y se le envió un email al correo asociado para desbloquearla'
+          'Contraseña incorrecta. La cuenta fue bloqueada y se le envió un email al correo asociado para desbloquearla.'
         );
       }
 
@@ -218,7 +218,7 @@ export class UsuariosService {
     if (!usuarioLogueado) {
       throw new BadRequestException('Usuario no encontrado');
     }
-    return { message: 'Sesión cerrada correctamente' };
+    return { message: 'Cierre de sesión exitoso' };
   }
 
   async modificarContrasena (dto: UpdateContrasenaDto){ 

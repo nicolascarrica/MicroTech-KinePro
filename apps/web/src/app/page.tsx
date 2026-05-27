@@ -4,6 +4,8 @@
 import Inicio from './Components/Inicio'; 
 import ReservaTurnos from './reservas/ReservaTurnos';
 import ProximosTurnosHome from '@/components/turnos/ProximosTurnosHome';
+import Ubicacion from '@/components/home/Ubicacion';
+import AcercaDe from '@/components/home/AcercaDe';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function HomePage() {
@@ -26,6 +28,12 @@ export default function HomePage() {
 
       {/* 3. Vista de admin/owner para próximos turnos y asistencias */}
       {esAdminOwner && <ProximosTurnosHome />}
+
+      {/* 4. Ubicación (para no autenticados y pacientes) */}
+      {!cargando && (!isAuthenticated || rol === 'PACIENTE') && <Ubicacion />}
+
+      {/* 5. Acerca de (para no autenticados y pacientes) */}
+      {!cargando && (!isAuthenticated || rol === 'PACIENTE') && <AcercaDe />}
     </div>
   );
 }

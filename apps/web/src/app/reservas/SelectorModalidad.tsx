@@ -14,7 +14,7 @@ export default function SelectorModalidad({ modalidad, onChangeModalidad }: Prop
           ${modalidad === 'UNICO' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
       >
         <Calendar className="w-4 h-4" />
-        Turno Único
+        Turno único
       </button>
       
       <button
@@ -23,7 +23,7 @@ export default function SelectorModalidad({ modalidad, onChangeModalidad }: Prop
           ${modalidad === 'MENSUAL' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
       >
         <Repeat className="w-4 h-4" />
-        Reserva Mensual
+        Reserva mensual
       </button>
     </div>
   );

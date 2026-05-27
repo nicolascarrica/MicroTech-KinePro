@@ -9,6 +9,7 @@ type LinkConfig = {
   href: string
   label: string
   rolesPermitidos: Rol[] | 'todos'
+  soloNoAutenticadosYPacientes?: boolean
 }
 
 const LINKS: LinkConfig[] = [
@@ -19,6 +20,8 @@ const LINKS: LinkConfig[] = [
   { href: '/mis-turnos/pendientes', label: 'Ver turnos pendientes',  rolesPermitidos: ['PACIENTE'] },
   { href: '/mis-turnos/pasados', label: 'Ver historial de turnos',  rolesPermitidos: ['PACIENTE'] },
   { href: '/estadisticas',  label: 'Estadísticas',   rolesPermitidos: ['ADMIN', 'OWNER'] },
+  { href: '/#ubicacion',    label: 'Ubicación',   rolesPermitidos: 'todos', soloNoAutenticadosYPacientes: true },
+  { href: '/#acerca-de',    label: 'Acerca de',    rolesPermitidos: 'todos', soloNoAutenticadosYPacientes: true },
   // Cuando hagamos el PR 3 se agrega: { href: '/usuarios/roles', label: 'Gestión de Roles', rolesPermitidos: ['OWNER'] },
 ]
 
@@ -37,6 +40,11 @@ export default function Sidebar() {
 
   // Filtrar los links según el rol del usuario
   const linksVisibles = LINKS.filter((link) => {
+    // Si es solo para no autenticados y pacientes, ocultar para admin/owner
+    if (link.soloNoAutenticadosYPacientes) {
+      if (!isAuthenticated) return true // Mostrar para no autenticados
+      return rol === 'PACIENTE' // Mostrar solo para pacientes
+    }
     if (link.rolesPermitidos === 'todos') return true
     if (!isAuthenticated || !rol) return false
     return link.rolesPermitidos.includes(rol)

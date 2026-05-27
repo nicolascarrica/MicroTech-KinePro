@@ -39,7 +39,7 @@ export default function PerfilDropdown() {
     localStorage.removeItem('kinepro_token')
     localStorage.removeItem('kinepro_user')
 
-    toast.success('Sesión cerrada correctamente')
+    toast.success('Cierre de sesión exitoso')
 
     setIsOpen(false)
     setTimeout(() => {
@@ -83,7 +83,7 @@ export default function PerfilDropdown() {
               </div>
 
               <div className="flex flex-col gap-0.5 p-1.5 text-sm text-slate-600">
-                <a
+                {/* <a
                   href="#perfil"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium transition-colors hover:bg-slate-50 hover:text-slate-900"
@@ -91,6 +91,7 @@ export default function PerfilDropdown() {
                   <User className="h-4 w-4 text-slate-400" />
                   Mi perfil
                 </a>
+                */}
                 <button
                   type="button"
                   onClick={() => {

@@ -23,7 +23,7 @@ export class AuthService {
 
     // Escenario 5: Fallido por cuenta bloqueada
     if (usuarioIngresado.bloqueado) {
-      throw new BadRequestException('La cuenta fue bloqueada');
+      throw new BadRequestException('La cuenta se encuentra bloqueada.');
     }
 
     // Escenario 3 y 4: Fallido por contraseña incorrecta
@@ -41,11 +41,11 @@ export class AuthService {
           data: { bloqueado: true },
         });
         throw new BadRequestException(
-          'Contraseña incorrecta. La cuenta fue bloqueada y se le envió un email al correo asociado para desbloquearla'
+          'Datos incorrectos. La cuenta fue bloqueada y se le envió un email al correo asociado para desbloquearla.'
         );
       }
 
-      throw new BadRequestException('Contraseña incorrecta, intente nuevamente.');
+      throw new BadRequestException('Datos incorrectos, intente nuevamente.');
     }
 
     // Escenario 1: Exitoso -> Reseteamos intentos fallidos

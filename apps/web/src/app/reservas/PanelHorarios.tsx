@@ -36,7 +36,7 @@ export default function PanelHorarios({
         {!diaSeleccionado ? (
           <div className="text-xs text-slate-400 bg-slate-50/60 rounded-2xl p-6 text-center border border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 min-h-[120px]">
             <CalendarDays className="w-6 h-6 text-slate-300 stroke-[1.5]" />
-            <span>Elige una fecha para ver horarios.</span>
+            <span>Elegí una fecha para ver los horarios.</span>
           </div>
         ) : horariosDelDia.length > 0 ? (
           <div className="grid grid-cols-2 gap-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">

@@ -139,7 +139,7 @@ export default function TablaActividades() {
       <TablaGenerica
         datos={actividades}
         columnas={columnas}
-        mensajeVacio="No hay actividades cargadas todavía."
+        mensajeVacio="No existen actividades registradas."
       />
 
       <ActividadModal

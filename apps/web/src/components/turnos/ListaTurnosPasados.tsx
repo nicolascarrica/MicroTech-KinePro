@@ -16,7 +16,7 @@ export default function ListaTurnosPasados({ turnos }: ListaTurnosPasadosProps) 
   if (turnos.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
-        <p className="text-sm font-medium text-slate-600">Usted no posee turnos pasados</p>
+        <p className="text-sm font-medium text-slate-600">No posee turnos pasados o cancelados</p>
       </div>
     )
   }
