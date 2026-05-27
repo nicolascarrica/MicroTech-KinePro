@@ -10,10 +10,14 @@ export default function TurnosPendientesPage() {
   const { autorizado, cargando } = useRequireRole(['PACIENTE'])
   const [turnosConfirmados, setTurnosConfirmados] = useState<any[]>([])
 
+  const refresh = async () => {
+    const data = await obtenerMisReservas('CONFIRMADA')
+    setTurnosConfirmados(data)
+  }
+
   useEffect(() => {
     if (!autorizado) return
-    obtenerMisReservas('CONFIRMADA')
-      .then((data) => setTurnosConfirmados(data))
+    refresh()
       .catch((err) => console.error('Error al traer los turnos:', err))
   }, [autorizado])
 
@@ -31,7 +35,7 @@ export default function TurnosPendientesPage() {
           Gestioná tus próximas reservas. Podés cancelar o reprogramar cada turno.
         </p>
       </div>
-      <ListaTurnosPendientes turnos={turnosConfirmados} />
+      <ListaTurnosPendientes turnos={turnosConfirmados} onActualizado={refresh} />
     </div>
   )
 }

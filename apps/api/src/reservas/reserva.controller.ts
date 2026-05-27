@@ -26,6 +26,13 @@ export class ReservaController {
   }
 
   @Roles('PACIENTE')
+  @Get('historial')
+  findHistorial(@Req() req) {
+    const pacienteId = req.user.id;
+    return this.reservaService.findHistorial(pacienteId);
+  }
+
+  @Roles('PACIENTE')
   @Get('mis-reservas')
   async getReservasFiltro(@Req() req, @Query('estado') estado:EstadoReserva = EstadoReserva.PENDIENTE)
   {
@@ -38,13 +45,17 @@ export class ReservaController {
     return this.reservaService.findOne(+id);
   }
 
+  @Roles('PACIENTE')
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateReservaDto: UpdateReservaDto) {
-    return this.reservaService.update(+id, updateReservaDto);
+  update(@Req() req, @Param('id') id: string, @Body() updateReservaDto: UpdateReservaDto) {
+    const pacienteId = req.user.id;
+    return this.reservaService.update(+id, pacienteId, updateReservaDto);
   }
 
+  @Roles('PACIENTE')
   @Delete(':id')
-  remove(@Param('id') id: number) {
-    return this.reservaService.remove(id);
+  remove(@Req() req, @Param('id') id: string) {
+    const pacienteId = req.user.id;
+    return this.reservaService.remove(+id, pacienteId);
   }
 }

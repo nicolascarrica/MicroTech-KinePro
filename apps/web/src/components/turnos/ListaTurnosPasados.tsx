@@ -41,23 +41,23 @@ export default function ListaTurnosPasados({ turnos }: ListaTurnosPasadosProps) 
               </div>
             </div>
             <div
-              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
+              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                turno.asistio ? 'border-kine-blue bg-kine-blue/10' : 'border-kine-blue/30 bg-kine-blue/5'
+              }`}
               role="group"
               aria-label="Asistencia al turno"
             >
               <span
                 className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
                   turno.asistio
-                    ? 'border-pro-green-deep bg-pro-green-deep text-white'
-                    : 'border-red-800 bg-white'
+                    ? 'border-kine-blue bg-kine-blue/15 text-kine-blue-deep'
+                    : 'border-kine-blue bg-kine-blue/10 text-kine-blue-deep'
                 }`}
               >
                 {turno.asistio && <Check className="h-2.5 w-2.5 stroke-[3]" />}
               </span>
               <span
-                className={`font-medium ${
-                  turno.asistio ? 'text-pro-green-deep' : 'text-red-800'
-                }`}
+                className={`font-medium ${turno.asistio ? 'text-kine-blue-deep' : 'text-kine-blue'}`}
               >
                 {turno.asistio ? 'Asistió' : 'Ausente'}
               </span>

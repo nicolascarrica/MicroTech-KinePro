@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateReservaDto } from './dto/create-reserva.dto';
 import { UpdateReservaDto } from './dto/update-reserva.dto';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -9,6 +9,30 @@ export class ReservaService {
   constructor(private prisma: PrismaService) {}
   private readonly logger = new Logger(ReservaService.name);
 
+  private buildTurnoDateTimeUTC(fecha: Date, horaInicio: Date) {
+    const y = fecha.getUTCFullYear();
+    const m = fecha.getUTCMonth();
+    const d = fecha.getUTCDate();
+    const hh = horaInicio.getUTCHours();
+    const mm = horaInicio.getUTCMinutes();
+    return new Date(Date.UTC(y, m, d, hh, mm, 0, 0));
+  }
+
+  private horasHastaTurno(reserva: { turno: { fecha: Date; hora_inicio: Date } }) {
+    const turnoDT = this.buildTurnoDateTimeUTC(reserva.turno.fecha, reserva.turno.hora_inicio);
+    const now = new Date();
+    return (turnoDT.getTime() - now.getTime()) / (1000 * 60 * 60);
+  }
+
+  private async assertReservaEsDelPaciente(reservaId: number, pacienteId: number) {
+    const reserva = await this.prisma.reserva.findUnique({
+      where: { id: reservaId },
+      include: { turno: true },
+    });
+    if (!reserva) throw new NotFoundException('La reserva no existe');
+    if (reserva.paciente_id !== pacienteId) throw new ForbiddenException('No tiene permisos sobre esta reserva');
+    return reserva;
+  }
 
   async create(createReservaDto: CreateReservaDto, pacienteId: number) {
   // 1. Buscamos el turno
@@ -114,12 +138,137 @@ export class ReservaService {
   });
 }
 
+  async findHistorial(pacienteId: number) {
+    const hoy = new Date();
+    return this.prisma.reserva.findMany({
+      where: {
+        paciente_id: pacienteId,
+        turno: {
+          fecha: { lt: hoy },
+        },
+      },
+      include: {
+        turno: {
+          include: { tipoActividad: true },
+        },
+      },
+      orderBy: {
+        turno: { fecha: 'desc' },
+      },
+    });
+  }
+
   findOne(id: number) {
     return `This action returns a #${id} reserva`;
   }
 
-  update(id: number, updateReservaDto: UpdateReservaDto) {
-    return `This action updates a #${id} reserva`;
+  async update(id: number, pacienteId: number, updateReservaDto: UpdateReservaDto) {
+    const reservaActual = await this.assertReservaEsDelPaciente(id, pacienteId);
+
+    const quiereCambiarTurno = typeof updateReservaDto.turno_id === 'number' && updateReservaDto.turno_id !== reservaActual.turno_id;
+    const quiereCambiarEstado = typeof updateReservaDto.estado !== 'undefined' && updateReservaDto.estado !== reservaActual.estado;
+
+    if (!quiereCambiarTurno && !quiereCambiarEstado) {
+      return { message: 'Sin cambios' };
+    }
+
+    // Caso 1: solo cambio de estado (por ahora permitido únicamente a CANCELADA)
+    if (!quiereCambiarTurno && quiereCambiarEstado) {
+      if (updateReservaDto.estado !== EstadoReserva.CANCELADA) {
+        throw new BadRequestException('Cambio de estado no permitido');
+      }
+      await this.cancelarReserva(id, reservaActual.turno_id);
+      const ausencias = await this.prisma.reserva.count({
+        where: { paciente_id: pacienteId, estado: EstadoReserva.AUSENTE },
+      });
+      const horas = this.horasHastaTurno(reservaActual);
+      const puedeReprogramar = horas >= 48 && ausencias < 2 && reservaActual.cant_reprogramaciones < 2;
+      return { message: 'Reserva cancelada', puedeReprogramar };
+    }
+
+    // Caso 2: reprogramación (cambio de turno)
+    if (quiereCambiarTurno) {
+      // Regla HU: se debe reprogramar con 48h o más de anticipación al turno original.
+      const horas = this.horasHastaTurno(reservaActual);
+      if (horas < 48) {
+        throw new BadRequestException('El límite de tiempo para reprogramar el turno no se alcanzó (mínimo 48 horas)');
+      }
+
+      // Regla HU: máximo 2 reprogramaciones.
+      if (reservaActual.cant_reprogramaciones >= 2) {
+        throw new BadRequestException('El paciente alcanzó el límite de reprogramaciones');
+      }
+
+      const nuevoTurno = await this.prisma.turno.findUnique({ where: { id: updateReservaDto.turno_id } });
+      if (!nuevoTurno) throw new BadRequestException('El turno especificado no existe');
+
+      if (nuevoTurno.estado === 'CANCELADO') {
+        throw new BadRequestException('El turno seleccionado no se encuentra disponible');
+      }
+      if (nuevoTurno.cantidad_inscriptos >= nuevoTurno.capacidad) {
+        throw new BadRequestException('El turno seleccionado no posee cupos disponibles');
+      }
+
+      // Evitar doble reserva en el mismo día (excluyendo la propia reserva)
+      const yaTieneOtraEseDia = await this.prisma.reserva.findFirst({
+        where: {
+          paciente_id: pacienteId,
+          id: { not: id },
+          estado: EstadoReserva.CONFIRMADA,
+          turno: { fecha: nuevoTurno.fecha },
+        },
+      });
+      if (yaTieneOtraEseDia) {
+        throw new BadRequestException('El paciente ya posee un turno confirmado para ese día');
+      }
+
+      try {
+        const nuevoEstado =
+          reservaActual.estado === EstadoReserva.CANCELADA ? EstadoReserva.CONFIRMADA : EstadoReserva.CONFIRMADA;
+
+        await this.prisma.$transaction(async (tx) => {
+          // decremento cupo del turno anterior
+          await tx.turno.update({
+            where: { id: reservaActual.turno_id },
+            data: { cantidad_inscriptos: { decrement: 1 } },
+          });
+
+          // incremento cupo del nuevo turno
+          await tx.turno.update({
+            where: { id: nuevoTurno.id },
+            data: { cantidad_inscriptos: { increment: 1 } },
+          });
+
+          const cantReprogramacionesNueva = reservaActual.cant_reprogramaciones + 1;
+          await tx.reserva.update({
+            where: { id },
+            data: {
+              turno_id: nuevoTurno.id,
+              estado: nuevoEstado,
+              cant_reprogramaciones: { increment: 1 },
+            },
+          });
+
+          // Nota: la pérdida de descuento se maneja en otra HU. Devolvemos una bandera para el front.
+          // Pierde descuento si llega a 2 reprogramaciones (o 2 ausencias, que se controla aparte).
+          // No persistimos nada todavía.
+          void cantReprogramacionesNueva;
+        });
+      } catch (error) {
+        this.logger.error(`Error al reprogramar la reserva: ${String(error)}`);
+        throw new InternalServerErrorException('Ocurrió un error inesperado al reprogramar el turno');
+      }
+
+      const cantReprogramaciones = reservaActual.cant_reprogramaciones + 1;
+      const ausencias = await this.prisma.reserva.count({
+        where: { paciente_id: pacienteId, estado: EstadoReserva.AUSENTE },
+      });
+      const pierdeDescuento = cantReprogramaciones >= 2 || ausencias >= 2;
+      return { message: 'Turno reprogramado', cantReprogramaciones, pierdeDescuento };
+    }
+
+    // Caso 3: cambio de turno + estado: no soportado (evita ambigüedad)
+    throw new BadRequestException('Operación no soportada');
   }
 
   // es para probar hasta que tengamos el pago
@@ -127,10 +276,42 @@ export class ReservaService {
     return `This action updates a #${id} reserva`;
   }
 
+  private async cancelarReserva(reservaId: number, turnoId: number) {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.reserva.update({
+        where: { id: reservaId },
+        data: { estado: EstadoReserva.CANCELADA },
+      });
+      await tx.turno.update({
+        where: { id: turnoId },
+        data: { cantidad_inscriptos: { decrement: 1 } },
+      });
+    });
+  }
 
-  remove(id: number) {
-    return `This action removes a #${id} reserva`;
-    // cancelar reservar seria
+  async remove(id: number, pacienteId: number) {
+    const reservaActual = await this.assertReservaEsDelPaciente(id, pacienteId);
+    if (reservaActual.estado === EstadoReserva.CANCELADA) {
+      const ausencias = await this.prisma.reserva.count({
+        where: { paciente_id: pacienteId, estado: EstadoReserva.AUSENTE },
+      });
+      const horas = this.horasHastaTurno(reservaActual);
+      const puedeReprogramar = horas >= 48 && ausencias < 2 && reservaActual.cant_reprogramaciones < 2;
+      return { message: 'La reserva ya estaba cancelada', puedeReprogramar };
+    }
+    try {
+      await this.cancelarReserva(id, reservaActual.turno_id);
+    } catch (error) {
+      this.logger.error(`Error al cancelar la reserva: ${String(error)}`);
+      throw new InternalServerErrorException('Ocurrió un error inesperado al cancelar el turno');
+    }
+    const ausencias = await this.prisma.reserva.count({
+      where: { paciente_id: pacienteId, estado: EstadoReserva.AUSENTE },
+    });
+    const horas = this.horasHastaTurno(reservaActual);
+    const puedeReprogramar = horas >= 48 && ausencias < 2 && reservaActual.cant_reprogramaciones < 2;
+    return { message: 'Reserva cancelada', puedeReprogramar };
+    // NOTA: mantenemos el registro (no hard delete)
   }
   async filtrarReservas(pacienteId: number, estado: EstadoReserva) {
     const fechaActual = new Date();
