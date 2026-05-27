@@ -16,7 +16,8 @@ const LINKS: LinkConfig[] = [
   { href: '/Usuarios',      label: 'Usuarios',       rolesPermitidos: ['ADMIN', 'OWNER'] },
   { href: '/actividades',   label: 'Actividades',    rolesPermitidos: ['ADMIN', 'OWNER'] },
   { href: '/turnos',        label: 'Turnos',         rolesPermitidos: ['ADMIN', 'OWNER'] },
-  { href: '/mis-turnos/pendientes', label: 'Mis turnos',  rolesPermitidos: ['PACIENTE'] },
+  { href: '/mis-turnos/pendientes', label: 'Ver turnos pendientes',  rolesPermitidos: ['PACIENTE'] },
+  { href: '/mis-turnos/pasados', label: 'Ver historial de turnos',  rolesPermitidos: ['PACIENTE'] },
   { href: '/estadisticas',  label: 'Estadísticas',   rolesPermitidos: ['ADMIN', 'OWNER'] },
   // Cuando hagamos el PR 3 se agrega: { href: '/usuarios/roles', label: 'Gestión de Roles', rolesPermitidos: ['OWNER'] },
 ]
@@ -44,9 +45,11 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-kine-blue-deep text-white flex flex-col h-screen sticky top-0 shadow-2xl shrink-0">
       <div className="p-6 border-b border-white/10 text-center flex items-center justify-center">
-        <h2 className="text-3xl font-bold tracking-wider">
-          Kine<span className="text-pro-green-light">Pro</span>
-        </h2>
+        <Link href="/" className="block">
+          <h2 className="text-3xl font-bold tracking-wider">
+            Kine<span className="text-pro-green-light">Pro</span>
+          </h2>
+        </Link>
       </div>
 
       <nav className="flex flex-col mt-8 gap-2 px-4">

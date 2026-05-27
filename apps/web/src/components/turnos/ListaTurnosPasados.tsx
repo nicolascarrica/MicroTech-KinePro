@@ -1,6 +1,6 @@
 'use client'
 
-import { CalendarCheck, Check } from 'lucide-react'
+import { CalendarCheck, Check, X } from 'lucide-react'
 import type { TurnoPacientePasado } from '@/types/turnoPaciente'
 
 function formatFecha(fecha: string): string {
@@ -45,7 +45,7 @@ export default function ListaTurnosPasados({ turnos }: ListaTurnosPasadosProps) 
                 turno.asistio ? 'border-kine-blue bg-kine-blue/10' : 'border-kine-blue/30 bg-kine-blue/5'
               }`}
               role="group"
-              aria-label="Asistencia al turno"
+              aria-label="Estado del turno"
             >
               <span
                 className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
@@ -54,12 +54,16 @@ export default function ListaTurnosPasados({ turnos }: ListaTurnosPasadosProps) 
                     : 'border-kine-blue bg-kine-blue/10 text-kine-blue-deep'
                 }`}
               >
-                {turno.asistio && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                {turno.estado === 'CANCELADA' ? (
+                  <X className="h-2.5 w-2.5 stroke-[3]" />
+                ) : (
+                  turno.asistio && <Check className="h-2.5 w-2.5 stroke-[3]" />
+                )}
               </span>
               <span
                 className={`font-medium ${turno.asistio ? 'text-kine-blue-deep' : 'text-kine-blue'}`}
               >
-                {turno.asistio ? 'Asistió' : 'Ausente'}
+                {turno.estado === 'CANCELADA' ? 'Cancelado' : turno.asistio ? 'Asistió' : 'Ausente'}
               </span>
             </div>
           </div>

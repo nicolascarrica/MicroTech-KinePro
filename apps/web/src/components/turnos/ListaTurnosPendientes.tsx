@@ -37,11 +37,7 @@ export default function ListaTurnosPendientes({ turnos, onActualizado }: ListaTu
   async function handleCancelarConfirmado(reservaId: number) {
     try {
       const res = await cancelarReserva(reservaId)
-      toast.success(res.message, {
-        description: res.puedeReprogramar
-          ? 'Todavía estás a tiempo de reprogramar (mínimo 48 horas).'
-          : undefined,
-      })
+      toast.success(res.message)
       setConfirmCancelId(null)
       onActualizado?.()
     } catch (e: any) {

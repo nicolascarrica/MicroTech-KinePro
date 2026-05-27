@@ -20,14 +20,13 @@ export function adaptarReservaPasasdoADto(reservaApi: any): TurnoPacientePasado 
   const fechaLimpia = reservaApi.turno.fecha.split('T')[0]; 
   const horaLimpia = reservaApi.turno.hora_inicio.substring(11, 16);
 
-
   return {
     id: reservaApi.id,
     fecha: fechaLimpia,
     hora: horaLimpia,
     actividad: reservaApi.turno.tipoActividad?.nombre || 'Sin actividad',
-    asistio: reservaApi.estado === 'ASISTIO'
-  
+    estado: reservaApi.estado,
+    asistio: reservaApi.estado === 'ASISTIO',
   };
 }
 

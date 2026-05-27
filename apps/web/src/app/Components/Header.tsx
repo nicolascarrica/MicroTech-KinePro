@@ -1,6 +1,6 @@
 import React from 'react';
 
-import NotificacionesDropdown from './NotificacionesDropdown'; // Importamos el nuevo panel
+// import NotificacionesDropdown from './NotificacionesDropdown'; // Importamos el nuevo panel
 import PerfilDropdown from './PerfilDropDown';
 
 export default function Header() {
@@ -11,8 +11,7 @@ export default function Header() {
         <h1 className="text-xl font-semibold text-gray-800">Panel de Control</h1>
       </div>
       <div className="flex items-center gap-6">
-        <NotificacionesDropdown />
-        
+        {/* <NotificacionesDropdown /> */}
         <div className="flex items-center gap-3 border-l border-gray-200 pl-6">
           <PerfilDropdown />
         </div>

@@ -3,35 +3,19 @@
 import React, { useState } from 'react';
 import { Bell, CheckCheck, CalendarPlus, AlertTriangle, Info, History } from 'lucide-react';
 
+type Notificacion = {
+  id: number;
+  titulo: string;
+  descripcion: string;
+  tiempo: string;
+  leida: boolean;
+  tipo: 'turno' | 'alerta' | 'sistema';
+};
+
 export default function NotificacionesDropdown() {
   const [isOpen, setIsOpen] = useState(false);
 
-  const [notificaciones, setNotificaciones] = useState([
-    {
-      id: 1,
-      titulo: 'Nuevo Turno Agendado',
-      descripcion: 'Carlos Gómez reservó una sesión de Kinesiología para el 22/05 a las 16:00.',
-      tiempo: 'Hace 5 min',
-      leida: false,
-      tipo: 'turno'
-    },
-    {
-      id: 2,
-      titulo: 'Turno Cancelado',
-      descripcion: 'María Laura canceló su turno de descarga muscular de mañana.',
-      tiempo: 'Hace 2 horas',
-      leida: false,
-      tipo: 'alerta'
-    },
-    {
-      id: 3,
-      titulo: 'Reporte Mensual Listo',
-      descripcion: 'El balance de turnos del mes anterior ya está disponible para descargar.',
-      tiempo: 'Ayer',
-      leida: true,
-      tipo: 'sistema'
-    }
-  ]);
+  const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
 
   const noLeidasCount = notificaciones.filter(n => !n.leida).length;
 
@@ -71,7 +55,6 @@ export default function NotificacionesDropdown() {
         <Bell className={`w-4 h-4 transition-transform ${isOpen ? 'scale-105' : ''}`} />
         <span className="text-sm font-semibold hidden md:inline text-slate-600">Notificaciones</span>
         
-        {/* 🔥 Píldora indicadora corregida: más chica, centrada y sin pisar el texto */}
         {noLeidasCount > 0 && (
           <span className="absolute top-0.5 left-4.5 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white shadow-sm transform translate-x-0.5 -translate-y-0.5">
             {noLeidasCount}
@@ -105,7 +88,7 @@ export default function NotificacionesDropdown() {
               {notificaciones.length === 0 ? (
                 <div className="p-8 text-center text-sm text-slate-400 flex flex-col items-center justify-center gap-2">
                   <Bell className="w-8 h-8 text-slate-300 stroke-[1.5]" />
-                  <span>No tienes notificaciones pendientes</span>
+                  <span>No tenés notificaciones pendientes</span>
                 </div>
               ) : (
                 notificaciones.map((notif) => {

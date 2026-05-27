@@ -51,6 +51,12 @@ export class ReservaService {
     );
   }
 
+  // CORRECCIÓN 2: no se puede reservar un turno que ya comenzó o ya pasó
+  const turnoFechaHora = this.buildTurnoDateTimeUTC(turno.fecha, turno.hora_inicio);
+  if (turnoFechaHora.getTime() <= Date.now()) {
+    throw new BadRequestException('No se puede reservar un turno en el pasado o que ya comenzó');
+  }
+
   // 2. Validamos la actividad
   const actividad = await this.prisma.tipoActividad.findUnique({
     where: { id: turno.tipoActividad_id },
@@ -143,9 +149,10 @@ export class ReservaService {
     return this.prisma.reserva.findMany({
       where: {
         paciente_id: pacienteId,
-        turno: {
-          fecha: { lt: hoy },
-        },
+        OR: [
+          { turno: { fecha: { lt: hoy } } },
+          { estado: EstadoReserva.CANCELADA },
+        ],
       },
       include: {
         turno: {
@@ -201,6 +208,11 @@ export class ReservaService {
 
       const nuevoTurno = await this.prisma.turno.findUnique({ where: { id: updateReservaDto.turno_id } });
       if (!nuevoTurno) throw new BadRequestException('El turno especificado no existe');
+
+      const nuevoTurnoFechaHora = this.buildTurnoDateTimeUTC(nuevoTurno.fecha, nuevoTurno.hora_inicio);
+      if (nuevoTurnoFechaHora.getTime() <= Date.now()) {
+        throw new BadRequestException('No se puede reprogramar a un turno en el pasado o que ya comenzó');
+      }
 
       if (nuevoTurno.estado === 'CANCELADO') {
         throw new BadRequestException('El turno seleccionado no se encuentra disponible');

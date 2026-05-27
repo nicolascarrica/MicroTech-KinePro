@@ -111,22 +111,6 @@ export default function PerfilDropdown() {
                   <UserPen className="h-4 w-4 text-slate-400" />
                   Modificar datos personales
                 </Link>
-                <Link
-                  href="/mis-turnos/pendientes"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium transition-colors hover:bg-slate-50 hover:text-slate-900"
-                >
-                  <CalendarClock className="h-4 w-4 text-slate-400" />
-                  Ver turnos pendientes
-                </Link>
-                <Link
-                  href="/mis-turnos/pasados"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium transition-colors hover:bg-slate-50 hover:text-slate-900"
-                >
-                  <History className="h-4 w-4 text-slate-400" />
-                  Ver turnos pasados
-                </Link>
               </div>
 
               <div className="border-t border-slate-100" />
