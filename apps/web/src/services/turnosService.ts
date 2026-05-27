@@ -91,7 +91,7 @@ export async function getTurnoById(id: number): Promise<TurnoDetalle> {
 export async function getHorariosTurnos(fecha: string): Promise<RangoHorarioBackend[]> {
   
 
-  const turnosPlanos = await apiFetch<any[]>(`/turnos?fecha=${fecha}`);
+  const turnosPlanos = await apiFetch<any[]>(`/turnos?fecha=${fecha}`,{ omitToken: true });
   const turnosAgrupados = new Map<string, RangoHorarioBackend>();
 
   turnosPlanos.forEach((t) => {
@@ -126,7 +126,7 @@ export async function getHorariosTurnos(fecha: string): Promise<RangoHorarioBack
 
 export async function getDiasDisponiblesDelMes(mes: number, anio: number): Promise<number[]> {
   
-  return apiFetch<number[]>(`/turnos/dias-disponibles/${mes}/${anio}`);
+  return apiFetch<number[]>(`/turnos/dias-disponibles/${mes}/${anio}`, { omitToken: true });
 }
 
 // import type { TurnoDetalle, TurnoResumen, CrearTurnoInput } from '@/types/turno'

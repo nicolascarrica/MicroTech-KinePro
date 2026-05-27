@@ -13,6 +13,7 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import ModificarContrasenaModal from '@/components/usuarios/ModificarContrasenaModal'
+import { useAuth } from '@/hooks/useAuth'
 
 type UsuarioSesion = {
   id?: number
@@ -25,6 +26,7 @@ export default function PerfilDropdown() {
   const [isOpen, setIsOpen] = useState(false)
   const [modalContrasena, setModalContrasena] = useState(false)
   const [usuario, setUsuario] = useState<UsuarioSesion | null>(null)
+  const { rol } = useAuth()
 
   useEffect(() => {
     const userStorage = localStorage.getItem('kinepro_user')
@@ -59,7 +61,7 @@ export default function PerfilDropdown() {
           <div className="flex flex-col text-right sm:flex">
             <span className="text-sm font-bold text-slate-700">{nombreCompleto}</span>
             <span className="text-xs font-medium text-slate-400">
-              {usuario ? 'Paciente' : 'Sin Sesión'}
+              {usuario ? rol : 'Sin Sesión'}
             </span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-teal-100 bg-teal-50 text-lg font-bold text-teal-600 shadow-sm">

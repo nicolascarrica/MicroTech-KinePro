@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import ListaTurnosPendientes from '@/components/turnos/ListaTurnosPendientes'
 import { obtenerMisReservas } from '@/services/turnosPacientesService'
-import { useRequireRole } from '@/hooks/useAuth'
+import { useAuth, useRequireRole } from '@/hooks/useAuth'
 
 export default function TurnosPendientesPage() {
   const { autorizado, cargando } = useRequireRole(['PACIENTE'])
+  const { rol } = useAuth()
   const [turnosConfirmados, setTurnosConfirmados] = useState<any[]>([])
 
   const refresh = async () => {
@@ -22,7 +23,14 @@ export default function TurnosPendientesPage() {
   }, [autorizado])
 
   if (cargando) return <p className="p-6 text-sm text-slate-500">Cargando...</p>
-  if (!autorizado) return null
+  
+  if (!autorizado) {
+    // Primero hacemos el log (fijate que agregué 'rol' para que veas qué valor exacto tiene)
+    console.log("No está autorizado. El rol actual es:", rol);
+    // Y devolvemos null para que React no se queje
+    return null; 
+  }
+  
 
   return (
     <div className="mx-auto w-full max-w-2xl">

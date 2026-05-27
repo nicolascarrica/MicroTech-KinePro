@@ -2,6 +2,7 @@ import { Controller, Post, Body, Patch, Param, ParseIntPipe, Delete, HttpCode, H
 import { ActividadesService } from './actividades.service';
 import { CreateActividadDto, ModificarActividadDto } from './actividades.dto';
 import { Roles } from '@/auth/roles.decorator';
+import { Public } from '@/auth/public.decorator';
 
 @Controller('actividades')
 export class ActividadesController {
@@ -28,7 +29,7 @@ export class ActividadesController {
   eliminar(@Param('id', ParseIntPipe) id: number) {
     return this.actividadesService.eliminar(id);
   }
-
+  @Public()
   @Get()
   listar() {
     return this.actividadesService.listarTodas();

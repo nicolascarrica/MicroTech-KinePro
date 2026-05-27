@@ -7,12 +7,11 @@ export function adaptarReservaADto(reservaApi: any): TurnoPacientePendiente {
   const fechaLimpia = reservaApi.turno.fecha.split('T')[0]; 
   const horaLimpia = reservaApi.turno.hora_inicio.substring(11, 16);
 
-  // Retorno con el formato exacto que ustedes definieron
   return {
     id: reservaApi.id,
     fecha: fechaLimpia,
     hora: horaLimpia,
-    actividad: reservaApi.turno.tipoActividad?.nombre || 'Sin actividad', // Fallback por las dudas
+    actividad: reservaApi.turno.tipoActividad?.nombre || 'Sin actividad', 
   
   };
 }
@@ -21,7 +20,7 @@ export function adaptarReservaPasasdoADto(reservaApi: any): TurnoPacientePasado 
   const fechaLimpia = reservaApi.turno.fecha.split('T')[0]; 
   const horaLimpia = reservaApi.turno.hora_inicio.substring(11, 16);
 
-  // Retorno con el formato exacto que ustedes definieron
+
   return {
     id: reservaApi.id,
     fecha: fechaLimpia,
@@ -38,7 +37,7 @@ export async function obtenerMisReservas(estado?: string): Promise<TurnoPaciente
   const data = (await apiFetch(endpoint)) as any[];
   return data.map(adaptarReservaADto);
 }
-export async function obtenerMisReservasPasadas(estado?: string): Promise<TurnoPacientePasado[]> {
+export async function obtenerMisReservasPasadas(): Promise<TurnoPacientePasado[]> {
   
   const endpoint="/reserva/historial" ;
   const data = (await apiFetch(endpoint)) as any[];

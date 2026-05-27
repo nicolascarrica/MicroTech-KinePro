@@ -1,18 +1,22 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api'
+// Extendemos las opciones de fetch para incluir nuestra propiedad personalizada
+interface FetchOptions extends RequestInit {
+  omitToken?: boolean;
+}
 
-export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  // 1. Armamos los headers base
+export async function apiFetch<T>(path: string, options?: FetchOptions): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
-  // 2. Buscamos el token en el LocalStorage en el momento exacto de la petición
-  if (typeof window !== 'undefined') {
+  // Buscamos el token solo si NO nos pidieron omitirlo explícitamente
+  if (typeof window !== 'undefined' && !options?.omitToken) {
     const token = localStorage.getItem('kinepro_token');
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`; // ¡Acá se inyecta la llave!
+      headers['Authorization'] = `Bearer ${token}`;
     }
   }
+
   const finalHeaders = {
     ...headers,
     ...options?.headers,
