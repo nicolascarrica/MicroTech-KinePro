@@ -32,7 +32,7 @@ export default function AcercaDe() {
                 <MessageCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-slate-800">WhatsApp</p>
-                  <p className="text-sm text-slate-600">+54 9 221 234-5678</p>
+                  <p className="text-sm text-slate-600">+54 9 221 123-4567</p>
                 </div>
               </div>
             </div>

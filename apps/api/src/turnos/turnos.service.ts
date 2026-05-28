@@ -15,23 +15,34 @@ export class TurnosService {
       throw new NotFoundException('La actividad no existe');
     }
 
-    // Parsear fecha y hora a Date
-    // Importante: usamos UTC para evitar corrimientos por zona horaria.
-    const fechaDate = new Date(`${dto.fecha}T00:00:00.000Z`);
-    const horaInicioDate = new Date(`1970-01-01T${dto.hora_inicio}:00.000Z`);
+    // Parsear fecha y hora a Date (interpretadas como hora local GMT-3)
+    const fechaDate = new Date(`${dto.fecha}T00:00:00`);
+    const horaInicioDate = new Date(`1970-01-01T${dto.hora_inicio}:00`);
 
-    // Validar que la fecha no sea anterior a hoy
-    const hoyUTC = new Date();
-    hoyUTC.setUTCHours(0, 0, 0, 0);
+    // Validar que la fecha no sea anterior a hoy (comparando fechas locales)
+    const hoy = new Date();
+    const hoyLocalDate = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 0, 0, 0, 0);
       
-    if (fechaDate < hoyUTC) {
+    if (fechaDate < hoyLocalDate) {
       throw new BadRequestException('La fecha del turno no puede ser anterior al día actual');
+    }
+
+    // Escenario 6: Si la fecha es el día actual, validar que el horario sea posterior al actual (GMT-3)
+    if (fechaDate.getTime() === hoyLocalDate.getTime()) {
+      const ahora = new Date();
+      const horaActualMinutos = ahora.getHours() * 60 + ahora.getMinutes();
+      const [horaIngresada, minutosIngresados] = dto.hora_inicio.split(':').map(Number);
+      const horaIngresadaMinutos = horaIngresada * 60 + minutosIngresados;
+      
+      if (horaIngresadaMinutos <= horaActualMinutos) {
+        throw new BadRequestException('La fecha y horario del turno no puede ser anterior al día y horario actual');
+      }
     }
 
 
     // Escenario 4: validar rango semanal (lunes a viernes).
-    // getUTCDay(): 0 = domingo, 1 = lunes, ..., 6 = sábado.
-    const diaSemana = fechaDate.getUTCDay();
+    // getDay(): 0 = domingo, 1 = lunes, ..., 6 = sábado.
+    const diaSemana = fechaDate.getDay();
     if (diaSemana === 0 || diaSemana === 6) {
       throw new BadRequestException('El día se encuentra fuera del rango semanal');
     }
@@ -83,7 +94,7 @@ export class TurnosService {
   // Cubre Escenarios 1 y 2: devuelve la lista de turnos de la fecha
   // (array vacío si no hay; el front muestra el mensaje correspondiente).
   async listarPorFecha(fechaStr: string) {
-    const fecha = new Date(`${fechaStr}T00:00:00.000Z`);
+    const fecha = new Date(`${fechaStr}T00:00:00`);
 
     const turnos = await this.prisma.turno.findMany({
       where: { fecha },
