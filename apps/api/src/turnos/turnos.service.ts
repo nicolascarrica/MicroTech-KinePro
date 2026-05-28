@@ -20,6 +20,15 @@ export class TurnosService {
     const fechaDate = new Date(`${dto.fecha}T00:00:00.000Z`);
     const horaInicioDate = new Date(`1970-01-01T${dto.hora_inicio}:00.000Z`);
 
+    // Validar que la fecha no sea anterior a hoy
+    const hoyUTC = new Date();
+    hoyUTC.setUTCHours(0, 0, 0, 0);
+      
+    if (fechaDate < hoyUTC) {
+      throw new BadRequestException('La fecha del turno no puede ser anterior al día actual');
+    }
+
+
     // Escenario 4: validar rango semanal (lunes a viernes).
     // getUTCDay(): 0 = domingo, 1 = lunes, ..., 6 = sábado.
     const diaSemana = fechaDate.getUTCDay();
