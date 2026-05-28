@@ -15,7 +15,7 @@ export class ActividadesService {
     });
 
     if (existe) {
-      throw new BadRequestException('La actividad ya se encuentra registrada');
+      throw new BadRequestException('El nombre de la actividad ya se encuentra registrado');
     }
     if (dto.precio === undefined || dto.precio === null) {
       throw new BadRequestException('El precio es obligatorio');
@@ -91,7 +91,7 @@ export class ActividadesService {
   
     await this.prisma.tipoActividad.delete({ where: { id } });
   
-    return { message: 'Actividad eliminada correctamente' };
+    return { message: 'La actividad se eliminó con éxito' };
   }
 
   async listarTodas() {

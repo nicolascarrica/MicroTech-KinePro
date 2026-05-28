@@ -5,6 +5,7 @@ interface TurnoGridProps {
   turnos: TurnoResumen[]
   loading: boolean
   onTurnoSelect: (turno: TurnoResumen) => void
+  selectable?: boolean
 }
 
 const ESTADO_BADGE: Record<EstadoTurno, string> = {
@@ -24,7 +25,7 @@ function formatFecha(isoDate: string): string {
   return `${day}/${month}/${year}`
 }
 
-export default function TurnoGrid({ fecha, turnos, loading, onTurnoSelect }: TurnoGridProps) {
+export default function TurnoGrid({ fecha, turnos, loading, onTurnoSelect, selectable = true }: TurnoGridProps) {
   if (!fecha) {
     return (
       <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-neutral-gray/40 bg-neutral-bg/50 text-neutral-gray">
@@ -70,8 +71,9 @@ export default function TurnoGrid({ fecha, turnos, loading, onTurnoSelect }: Tur
           {turnos.map((turno) => (
             <tr
               key={turno.id}
-              onClick={() => onTurnoSelect(turno)}
-              className="cursor-pointer transition-colors hover:bg-kineblue/5"
+              onClick={selectable ? () => onTurnoSelect(turno) : undefined}
+              className={`transition-colors ${selectable ? 'cursor-pointer hover:bg-kineblue/5' : 'cursor-default'}`}
+              aria-disabled={!selectable}
             >
               <td className="px-4 py-3 font-medium text-kineblue">{turno.horario}</td>
               <td className="px-4 py-3 text-gray-700">{turno.actividad}</td>

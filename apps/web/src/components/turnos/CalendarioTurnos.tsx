@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
@@ -11,9 +12,25 @@ interface CalendarioTurnosProps {
   onFechaSelect: (fecha: string) => void
 }
 
+function obtenerFechaHoy(): string {
+  const hoy = new Date()
+  const year = hoy.getFullYear()
+  const month = String(hoy.getMonth() + 1).padStart(2, '0')
+  const day = String(hoy.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export default function CalendarioTurnos({ fechaSeleccionada, onFechaSelect }: CalendarioTurnosProps) {
+  const calendarRef = useRef<FullCalendar>(null)
+  const fechaHoy = obtenerFechaHoy()
+
   function handleDateClick(arg: DateClickArg) {
     onFechaSelect(arg.dateStr)
+  }
+
+  function handleTodayClick() {
+    calendarRef.current?.getApi().today()
+    onFechaSelect(fechaHoy)
   }
 
   return (
@@ -42,14 +59,22 @@ export default function CalendarioTurnos({ fechaSeleccionada, onFechaSelect }: C
         }
       `}</style>
       <FullCalendar
+        ref={calendarRef}
         plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
         locale={esLocale}
+        initialDate={fechaSeleccionada ?? fechaHoy}
         dateClick={handleDateClick}
         headerToolbar={{
-          left: 'prev,next today',
+          left: 'prev,next customToday',
           center: 'title',
           right: '',
+        }}
+        customButtons={{
+          customToday: {
+            text: 'Hoy',
+            click: handleTodayClick,
+          },
         }}
         height="auto"
         dayMaxEvents={false}

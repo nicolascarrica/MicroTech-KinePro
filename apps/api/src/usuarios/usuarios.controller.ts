@@ -33,14 +33,14 @@ export class UsuariosController {
     return this.usuariosService.cerrarSesion(LogoutDto);
   }
 
-  @Put('modificarcontraseña')
-  modificarContraseña(@Body() UpdateContrasenaDto: UpdateContrasenaDto){
+  @Put('modificarcontrasena')
+  modificarContrasena(@Body() UpdateContrasenaDto: UpdateContrasenaDto){
     return this.usuariosService.modificarContrasena(UpdateContrasenaDto);
   }
 
   @Public() // Permite el acceso sin autenticación a esta ruta
   @Put('llamadarestablecimiento')
-  restablecerContraseña(@Body() callRestoreContrasenaDto: CallRestoreContrasenaDto){
+  restablecerContrasena(@Body() callRestoreContrasenaDto: CallRestoreContrasenaDto){
     return this.usuariosService.callRestablecerContrasena(callRestoreContrasenaDto);
   }
 

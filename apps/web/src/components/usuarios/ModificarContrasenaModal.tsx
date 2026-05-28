@@ -18,7 +18,6 @@ export default function ModificarContrasenaModal({
 }: ModificarContrasenaModalProps) {
   const [passwordActual, setPasswordActual] = useState('')
   const [passwordNueva, setPasswordNueva] = useState('')
-  const [passwordConfirmacion, setPasswordConfirmacion] = useState('')
   const [guardando, setGuardando] = useState(false)
 
   if (!abierto) return null
@@ -26,8 +25,13 @@ export default function ModificarContrasenaModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    if (passwordNueva !== passwordConfirmacion) {
-      toast.error('Las contraseñas nuevas no coinciden')
+    if (!passwordActual) {
+      toast.error('La contraseña actual es obligatoria')
+      return
+    }
+
+    if (!passwordNueva || passwordNueva.length < 8) {
+      toast.error('La contraseña nueva debe contener mínimo 8 caracteres')
       return
     }
 
@@ -41,7 +45,6 @@ export default function ModificarContrasenaModal({
       toast.success(res.message)
       setPasswordActual('')
       setPasswordNueva('')
-      setPasswordConfirmacion('')
       onClose()
     } catch (err: unknown) {
       const mensaje = err instanceof Error ? err.message : 'Error al modificar la contraseña'
@@ -81,7 +84,6 @@ export default function ModificarContrasenaModal({
               type="password"
               value={passwordActual}
               onChange={(e) => setPasswordActual(e.target.value)}
-              required
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-kine-blue"
             />
           </div>
@@ -94,22 +96,6 @@ export default function ModificarContrasenaModal({
               type="password"
               value={passwordNueva}
               onChange={(e) => setPasswordNueva(e.target.value)}
-              required
-              minLength={8}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-kine-blue"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">
-              Confirmar contraseña nueva
-            </label>
-            <input
-              type="password"
-              value={passwordConfirmacion}
-              onChange={(e) => setPasswordConfirmacion(e.target.value)}
-              required
-              minLength={8}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-kine-blue"
             />
           </div>

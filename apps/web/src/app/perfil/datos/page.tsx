@@ -12,12 +12,33 @@ export default function ModificarDatosPage() {
   const router = useRouter()
   const { usuario, autorizado, cargando } = useRequireRole(['ADMIN', 'OWNER', 'PACIENTE']) as any
   const [datosUsuario, setDatosUsuario] = useState<UsuarioSesion | null>(null)
+  const [nombre, setNombre] = useState('')
+  const [apellido, setApellido] = useState('')
+  const [email, setEmail] = useState('')
+  const [dni, setDni] = useState('')
+  const [telefono, setTelefono] = useState('')
   const [guardando, setGuardando] = useState(false)
+
+  const hayCambios = datosUsuario && (
+    nombre !== datosUsuario.nombre ||
+    apellido !== datosUsuario.apellido ||
+    email !== datosUsuario.email ||
+    dni !== (datosUsuario.dni ?? '') ||
+    telefono !== (datosUsuario.telefono ?? '')
+  )
 
   useEffect(() => {
     if (!autorizado) return
     const raw = localStorage.getItem('kinepro_user')
-    if (raw) setDatosUsuario(JSON.parse(raw))
+    if (raw) {
+      const usuarioActual = JSON.parse(raw) as UsuarioSesion
+      setDatosUsuario(usuarioActual)
+      setNombre(usuarioActual.nombre)
+      setApellido(usuarioActual.apellido)
+      setEmail(usuarioActual.email)
+      setDni(usuarioActual.dni ?? '')
+      setTelefono(usuarioActual.telefono ?? '')
+    }
   }, [autorizado])
 
   if (cargando) return <p className="p-6 text-sm text-slate-500">Cargando...</p>
@@ -26,13 +47,6 @@ export default function ModificarDatosPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!datosUsuario) return
-
-    const form = new FormData(e.currentTarget)
-    const nombre = String(form.get('nombre') ?? '')
-    const apellido = String(form.get('apellido') ?? '')
-    const email = String(form.get('email') ?? '')
-    const dni = String(form.get('dni') ?? '')
-    const telefono = String(form.get('telefono') ?? '')
 
     const payload: {
       id: number
@@ -81,7 +95,8 @@ export default function ModificarDatosPage() {
               <label className="mb-1 block text-sm font-medium text-slate-700">Nombre</label>
               <input
                 name="nombre"
-                defaultValue={datosUsuario.nombre}
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
                 required
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
               />
@@ -90,7 +105,8 @@ export default function ModificarDatosPage() {
               <label className="mb-1 block text-sm font-medium text-slate-700">Apellido</label>
               <input
                 name="apellido"
-                defaultValue={datosUsuario.apellido}
+                value={apellido}
+                onChange={(e) => setApellido(e.target.value)}
                 required
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
               />
@@ -101,7 +117,8 @@ export default function ModificarDatosPage() {
             <input
               name="email"
               type="email"
-              defaultValue={datosUsuario.email}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
             />
@@ -111,7 +128,8 @@ export default function ModificarDatosPage() {
               <label className="mb-1 block text-sm font-medium text-slate-700">DNI</label>
               <input
                 name="dni"
-                defaultValue={datosUsuario.dni ?? ''}
+                value={dni}
+                onChange={(e) => setDni(e.target.value)}
                 required
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
               />
@@ -120,7 +138,8 @@ export default function ModificarDatosPage() {
               <label className="mb-1 block text-sm font-medium text-slate-700">Teléfono</label>
               <input
                 name="telefono"
-                defaultValue={datosUsuario.telefono ?? ''}
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
                 required
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-teal-500"
               />
@@ -136,7 +155,7 @@ export default function ModificarDatosPage() {
             </Link>
             <button
               type="submit"
-              disabled={guardando}
+              disabled={guardando || !hayCambios}
               className="flex items-center gap-2 rounded-lg bg-kine-blue px-4 py-2 text-sm font-semibold text-white hover:bg-kine-blue-deep disabled:opacity-50"
             >
               {guardando && <Loader2 className="h-4 w-4 animate-spin" />}

@@ -19,6 +19,9 @@ export default function ActividadModal({ abierto, actividad, onClose, onGuardado
   const [guardando, setGuardando] = useState(false)
 
   const esModificar = actividad !== null
+  const hayCambios = esModificar && actividad
+    ? nombre.trim() !== (actividad.nombre ?? '') || precio.trim() !== String(actividad.precio ?? '')
+    : true
 
   useEffect(() => {
     if (abierto) {
@@ -81,7 +84,7 @@ export default function ActividadModal({ abierto, actividad, onClose, onGuardado
               onChange={(e) => setNombre(e.target.value)}
               maxLength={50}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-kine-blue"
-              placeholder="Ej: Kinesiología General"
+              placeholder="Ej: Tren medio"
             />
           </div>
 
@@ -109,7 +112,7 @@ export default function ActividadModal({ abierto, actividad, onClose, onGuardado
             </button>
             <button
               type="submit"
-              disabled={guardando}
+              disabled={guardando || (esModificar && !hayCambios)}
               className="px-4 py-2 rounded-lg text-sm font-semibold bg-kine-blue text-white hover:bg-kine-blue-deep disabled:opacity-50 flex items-center gap-2"
             >
               {guardando && <Loader2 className="w-4 h-4 animate-spin" />}

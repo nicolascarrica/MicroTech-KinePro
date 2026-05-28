@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import TurnoGrid from '@/components/turnos/TurnoGrid'
 import TurnoModal from '@/components/turnos/TurnoModal'
@@ -10,13 +10,21 @@ import CrearTurnoModal from '@/components/turnos/CrearTurnoModal'
 import { Plus } from 'lucide-react'
 import { useRequireRole } from '@/hooks/useAuth'
 
+function obtenerFechaHoy(): string {
+  const hoy = new Date()
+  const year = hoy.getFullYear()
+  const month = String(hoy.getMonth() + 1).padStart(2, '0')
+  const day = String(hoy.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 // FullCalendar no soporta SSR → carga dinámica solo en cliente
 const CalendarioTurnos = dynamic(() => import('@/components/turnos/CalendarioTurnos'), { ssr: false })
 
 export default function TurnosPage() {
   const { autorizado, cargando } = useRequireRole(['ADMIN', 'OWNER'])
 
-  const [fechaSeleccionada, setFechaSeleccionada] = useState<string | null>(null)
+  const [fechaSeleccionada, setFechaSeleccionada] = useState<string | null>(obtenerFechaHoy())
   const [turnos, setTurnos] = useState<TurnoResumen[]>([])
   const [loadingTurnos, setLoadingTurnos] = useState(false)
 
@@ -36,6 +44,12 @@ export default function TurnosPage() {
       setLoadingTurnos(false)
     }
   }
+
+  useEffect(() => {
+    if (fechaSeleccionada) {
+      void handleFechaSelect(fechaSeleccionada)
+    }
+  }, [])
 
   async function handleTurnoSelect(turno: TurnoResumen) {
     setTurnoDetalle(null)
@@ -84,6 +98,7 @@ export default function TurnosPage() {
               turnos={turnos}
               loading={loadingTurnos}
               onTurnoSelect={handleTurnoSelect}
+              selectable={false}
             />
           </section>
         </div>

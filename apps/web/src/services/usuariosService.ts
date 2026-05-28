@@ -9,7 +9,7 @@ export async function modificarContrasena(payload: {
   passwordActual: string
   passwordNueva: string
 }): Promise<{ message: string }> {
-  return apiFetch('/usuarios/modificarcontraseña', {
+  return apiFetch('/usuarios/modificarcontrasena', {
     method: 'PUT',
     body: JSON.stringify(payload),
   })

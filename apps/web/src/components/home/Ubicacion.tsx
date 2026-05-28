@@ -1,10 +1,17 @@
 'use client'
 
+import { MapPin, Navigation } from 'lucide-react'
+
 export default function Ubicacion() {
   return (
     <section id="ubicacion" className="w-full bg-white p-6 rounded-2xl shadow-sm border border-gray-100 scroll-mt-20">
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-slate-800">📍 Ubicación</h2>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+            <MapPin className="h-5 w-5 text-blue-600" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-800">Ubicación</h2>
+        </div>
         <p className="text-sm text-slate-500 mt-1">Nos encontramos en la Facultad de Informática de la UNLP.</p>
       </div>
 
@@ -27,7 +34,7 @@ export default function Ubicacion() {
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 bg-teal-50 hover:bg-teal-100 text-teal-700 font-medium px-4 py-2.5 rounded-xl transition-colors"
         >
-          <span>📲</span>
+          <Navigation className="h-5 w-5" />
           Abrir en Google Maps
         </a>
       </div>

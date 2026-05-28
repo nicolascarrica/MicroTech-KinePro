@@ -1,12 +1,43 @@
 'use client'
 
+import { Info, Calendar, Clock, MessageCircle } from 'lucide-react'
+
 export default function AcercaDe() {
   return (
     <section id="acerca-de" className="w-full bg-white p-6 rounded-2xl shadow-sm border border-gray-100 scroll-mt-20">
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-slate-800">ℹ️ Acerca de nosotros</h2>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+            <Info className="h-5 w-5 text-blue-600" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-800">Acerca de nosotros</h2>
+        </div>
         <p className="text-sm text-slate-500 mt-1">Conocé más sobre nuestro centro de kinesiología</p>
       </div>
+
+      {/* Información de Contacto */}
+        <div className="mb-6">
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-start gap-3">
+                <Clock className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-slate-800">Horario de atención</p>
+                  <p className="text-sm text-slate-600">Lunes a viernes: 7:00 a 21:00 hs</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-start gap-3">
+                <MessageCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-slate-800">WhatsApp</p>
+                  <p className="text-sm text-slate-600">+54 9 221 234-5678</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
       <div className="space-y-6">
         {/* Historia */}
@@ -49,11 +80,17 @@ export default function AcercaDe() {
           </p>
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="font-semibold text-slate-800 mb-1">📅 Turnos fijos</p>
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="h-5 w-5 text-teal-600" />
+                <p className="font-semibold text-slate-800">Turnos fijos</p>
+              </div>
               <p className="text-sm text-slate-600">Para pacientes regulares que requieren un seguimiento continuo.</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="font-semibold text-slate-800 mb-1">⏰ Turnos por demanda</p>
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-5 w-5 text-teal-600" />
+                <p className="font-semibold text-slate-800">Turnos por demanda</p>
+              </div>
               <p className="text-sm text-slate-600">Para consultas puntuales o cuando lo necesites.</p>
             </div>
           </div>

@@ -116,16 +116,14 @@ export async function getTurnosProximos(
 }
 
 export async function getTurnoById(id: number): Promise<TurnoDetalle> {
-  // TODO: reemplazar mock por → return apiFetch<TurnoDetalle>(`/turnos/${id}`)
-  const turno = MOCK_TURNOS.find((t) => t.id === id)
-  if (!turno) throw new Error(`Turno ${id} no encontrado`)
-  return Promise.resolve({
-    id: turno.id,
-    horario: turno.horario,
-    actividad: turno.actividad,
-    reservasActuales: turno.reservasActuales,
-    espaciosLibres: turno.espaciosLibres,
-  })
+  const data = await apiFetch<any>(`/turnos/${id}`)
+  return {
+    id: data.id,
+    horario: extractHora(data.hora_inicio),
+    actividad: data.actividad,
+    reservasActuales: data.cantidad_inscriptos ?? data.cantidad_reservas ?? 0,
+    espaciosLibres: data.espacios_libres,
+  }
 }
 export async function getHorariosTurnos(fecha: string): Promise<RangoHorarioBackend[]> {
   
