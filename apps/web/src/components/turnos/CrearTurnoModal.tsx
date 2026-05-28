@@ -121,6 +121,7 @@ export default function CrearTurnoModal({ abierto, fechaInicial, onClose, onCrea
               type="date"
               value={fecha}
               onChange={(e) => setFecha(e.target.value)}
+              //min={new Date().toISOString().split('T')[0]}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-kine-blue"
             />
           </div>
