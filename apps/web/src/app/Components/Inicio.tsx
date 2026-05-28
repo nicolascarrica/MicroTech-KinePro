@@ -2,7 +2,32 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { toast } from 'sonner'; 
+import { toast } from 'sonner';
+
+const SOLO_LETRAS = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s']+$/;
+const DNI_NUMERICO = /^\d{7,8}$/;
+const TELEFONO_NUMERICO = /^\d{8,15}$/;
+
+function validarRegistro(data: Record<string, FormDataEntryValue>): string | null {
+  const nombre = String(data.nombre ?? '').trim();
+  const apellido = String(data.apellido ?? '').trim();
+  const dni = String(data.dni ?? '').replace(/\D/g, '');
+  const telefono = String(data.telefono ?? '').replace(/\D/g, '');
+
+  if (!nombre || !SOLO_LETRAS.test(nombre)) {
+    return 'El nombre solo puede contener letras';
+  }
+  if (!apellido || !SOLO_LETRAS.test(apellido)) {
+    return 'El apellido solo puede contener letras';
+  }
+  if (!DNI_NUMERICO.test(dni)) {
+    return 'El DNI debe contener solo números (7 u 8 dígitos)';
+  }
+  if (!TELEFONO_NUMERICO.test(telefono)) {
+    return 'El teléfono solo puede contener números';
+  }
+  return null;
+}
 
 export default function Inicio() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -58,7 +83,20 @@ export default function Inicio() {
   async function manejarRegister(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const data = Object.fromEntries(formData.entries());
+    const raw = Object.fromEntries(formData.entries());
+    const errorValidacion = validarRegistro(raw);
+    if (errorValidacion) {
+      toast.error('Datos inválidos', { description: errorValidacion, duration: 5000 });
+      return;
+    }
+
+    const data = {
+      ...raw,
+      nombre: String(raw.nombre).trim(),
+      apellido: String(raw.apellido).trim(),
+      dni: String(raw.dni).replace(/\D/g, ''),
+      telefono: String(raw.telefono).replace(/\D/g, ''),
+    };
     const url = `${process.env.NEXT_PUBLIC_API_URL}/usuarios/registro`;
 
     try {
@@ -76,7 +114,7 @@ export default function Inicio() {
       }
 
       toast.success('¡Registro completado con éxito!', {
-        description: 'Ya podés iniciar sesión con tus credenciales.',
+        description: 'Ya podés iniciar sesión.',
       });
 
       setIsRegisterOpen(false);
@@ -184,19 +222,54 @@ export default function Inicio() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Nombre</label>
-                  <input type="text" name="nombre" required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="Juan" />
+                  <input
+                    type="text"
+                    name="nombre"
+                    required
+                    pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s']+"
+                    title="Solo letras"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500"
+                    placeholder="Juan"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Apellido</label>
-                  <input type="text" name="apellido" required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="Pérez" />
+                  <input
+                    type="text"
+                    name="apellido"
+                    required
+                    pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s']+"
+                    title="Solo letras"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500"
+                    placeholder="Pérez"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">DNI</label>
-                  <input type="text" name="dni" required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="12345678" />
+                  <input
+                    type="text"
+                    name="dni"
+                    required
+                    inputMode="numeric"
+                    pattern="\d{7,8}"
+                    maxLength={8}
+                    title="7 u 8 números"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500"
+                    placeholder="12345678"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Teléfono</label>
-                  <input type="text" name="telefono" required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="221123456" />
+                  <input
+                    type="tel"
+                    name="telefono"
+                    required
+                    inputMode="numeric"
+                    pattern="\d{8,15}"
+                    title="Solo números (8 a 15 dígitos)"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500"
+                    placeholder="221123456"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Fecha de nacimiento</label>
