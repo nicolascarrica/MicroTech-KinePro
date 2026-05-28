@@ -2,6 +2,43 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTurnoDto } from './turnos.dto';
 
+function dateTimePartsInTimeZone(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const map = new Map(parts.map((p) => [p.type, p.value]));
+  const year = Number(map.get('year'));
+  const month = Number(map.get('month'));
+  const day = Number(map.get('day'));
+  const hour = Number(map.get('hour'));
+  const minute = Number(map.get('minute'));
+
+  if (![year, month, day, hour, minute].every(Number.isFinite)) {
+    throw new Error(`No se pudieron obtener partes de fecha/hora para TZ=${timeZone}`);
+  }
+
+  return { year, month, day, hour, minute };
+}
+
+function parseFechaYYYYMMDD(fecha: string) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fecha);
+  if (!m) throw new BadRequestException('La fecha debe estar en formato YYYY-MM-DD');
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (![year, month, day].every(Number.isFinite)) {
+    throw new BadRequestException('La fecha debe ser válida');
+  }
+  return { year, month, day };
+}
+
 @Injectable()
 export class TurnosService {
   constructor(private prisma: PrismaService) {}
@@ -15,23 +52,36 @@ export class TurnosService {
       throw new NotFoundException('La actividad no existe');
     }
 
-    // Parsear fecha y hora a Date
-    // Importante: usamos UTC para evitar corrimientos por zona horaria.
-    const fechaDate = new Date(`${dto.fecha}T00:00:00.000Z`);
-    const horaInicioDate = new Date(`1970-01-01T${dto.hora_inicio}:00.000Z`);
+    // Persistimos `fecha` (@db.Date) y `hora_inicio` (@db.Time) como "valores de pared" (sin TZ).
+    // Usar Date.UTC evita corrimientos cuando Prisma serializa a ISO (UTC) y la DB es DATE/TIME.
+    const { year, month, day } = parseFechaYYYYMMDD(dto.fecha);
+    const fechaDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    const [horaIngresada, minutosIngresados] = dto.hora_inicio.split(':').map(Number);
+    const horaInicioDate = new Date(Date.UTC(1970, 0, 1, horaIngresada, minutosIngresados, 0, 0));
 
-    // Validar que la fecha no sea anterior a hoy
-    const hoyUTC = new Date();
-    hoyUTC.setUTCHours(0, 0, 0, 0);
-      
+    // Validar "hoy" en Buenos Aires, independientemente de la TZ del servidor
+    const timeZone = 'America/Argentina/Buenos_Aires';
+    const ahoraBA = dateTimePartsInTimeZone(new Date(), timeZone);
+    const hoyUTC = new Date(Date.UTC(ahoraBA.year, ahoraBA.month - 1, ahoraBA.day, 0, 0, 0, 0));
+
     if (fechaDate < hoyUTC) {
       throw new BadRequestException('La fecha del turno no puede ser anterior al día actual');
     }
 
+    // Escenario 6: si la fecha es hoy (BA), validar que el horario sea posterior al actual (BA)
+    if (fechaDate.getTime() === hoyUTC.getTime()) {
+      const horaActualMinutos = ahoraBA.hour * 60 + ahoraBA.minute;
+      const horaIngresadaMinutos = horaIngresada * 60 + minutosIngresados;
+      
+      if (horaIngresadaMinutos <= horaActualMinutos) {
+        throw new BadRequestException('La fecha y horario del turno no puede ser anterior al día y horario actual');
+      }
+    }
+
 
     // Escenario 4: validar rango semanal (lunes a viernes).
-    // getUTCDay(): 0 = domingo, 1 = lunes, ..., 6 = sábado.
-    const diaSemana = fechaDate.getUTCDay();
+    // getDay(): 0 = domingo, 1 = lunes, ..., 6 = sábado.
+    const diaSemana = fechaDate.getDay();
     if (diaSemana === 0 || diaSemana === 6) {
       throw new BadRequestException('El día se encuentra fuera del rango semanal');
     }
@@ -83,7 +133,7 @@ export class TurnosService {
   // Cubre Escenarios 1 y 2: devuelve la lista de turnos de la fecha
   // (array vacío si no hay; el front muestra el mensaje correspondiente).
   async listarPorFecha(fechaStr: string) {
-    const fecha = new Date(`${fechaStr}T00:00:00.000Z`);
+    const fecha = new Date(`${fechaStr}T00:00:00`);
 
     const turnos = await this.prisma.turno.findMany({
       where: { fecha },
