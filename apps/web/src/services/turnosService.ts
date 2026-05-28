@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/api'
-import type { CrearTurnoInput, RangoHorarioBackend, TurnoDetalle, TurnoResumen, TurnoResumenConFecha } from '@/types/turno'
+import type { CrearTurnoInput, RangoHorarioBackend, TurnoDetalle, TurnoEventoMes, TurnoResumen, TurnoResumenConFecha } from '@/types/turno'
 
 
 function extractHora(isoString: string): string {
@@ -15,48 +15,6 @@ function calcularHoraHasta(horaDesde: string): string {
   return `${proximaHora}:${m}`;
 }
 
-// --- Mock data: eliminar cuando la API esté lista ---
-const MOCK_TURNOS: TurnoResumen[] = [
-  {
-    id: 1,
-    horario: '09:00',
-    actividad: 'Kinesiología General',
-    estado: 'DISPONIBLE',
-    capacidad: 5,
-    reservasActuales: 2,
-    espaciosLibres: 3,
-  },
-  {
-    id: 2,
-    horario: '10:30',
-    actividad: 'Rehabilitación Deportiva',
-    estado: 'DISPONIBLE',
-    capacidad: 3,
-    reservasActuales: 3,
-    espaciosLibres: 0,
-  },
-  {
-    id: 3,
-    horario: '12:00',
-    actividad: 'Masoterapia',
-    estado: 'CANCELADO',
-    capacidad: 4,
-    reservasActuales: 0,
-    espaciosLibres: 0,
-  },
-  {
-    id: 4,
-    horario: '14:00',
-    actividad: 'Hidroterapia',
-    estado: 'DISPONIBLE',
-    capacidad: 6,
-    reservasActuales: 1,
-    espaciosLibres: 5,
-  },
-]
-// --- Fin mock data ---
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api'
 
 
 export async function crearTurno(input: CrearTurnoInput): Promise<{ message: string }> {
@@ -121,8 +79,16 @@ export async function getTurnoById(id: number): Promise<TurnoDetalle> {
     id: data.id,
     horario: extractHora(data.hora_inicio),
     actividad: data.actividad,
+    capacidad: data.capacidad,
     reservasActuales: data.cantidad_inscriptos ?? data.cantidad_reservas ?? 0,
     espaciosLibres: data.espacios_libres,
+    inscriptos: (data.inscriptos ?? []).map((i: any) => ({
+      id: i.id,
+      nombre: i.nombre,
+      apellido: i.apellido,
+      estado: i.estado,
+      pagado: i.pagado ?? false,
+    })),
   }
 }
 export async function getHorariosTurnos(fecha: string): Promise<RangoHorarioBackend[]> {
@@ -162,8 +128,11 @@ export async function getHorariosTurnos(fecha: string): Promise<RangoHorarioBack
 }
 
 export async function getDiasDisponiblesDelMes(mes: number, anio: number): Promise<number[]> {
-  
   return apiFetch<number[]>(`/turnos/dias-disponibles/${mes}/${anio}`, { omitToken: true });
+}
+
+export async function getReservasMes(mes: number, anio: number): Promise<TurnoEventoMes[]> {
+  return apiFetch<TurnoEventoMes[]>(`/turnos/reservas-mes/${mes}/${anio}`);
 }
 
 // import type { TurnoDetalle, TurnoResumen, CrearTurnoInput } from '@/types/turno'

@@ -107,7 +107,20 @@ export class TurnosService {
   async obtenerDetalle(id: number) {
     const turno = await this.prisma.turno.findUnique({
       where: { id },
-      include: { tipoActividad: true },
+      include: {
+        tipoActividad: true,
+        reservas: {
+          where: { estado: { not: 'CANCELADA' } },
+          include: {
+            paciente: {
+              include: {
+                usuario: { select: { nombre: true, apellido: true } },
+              },
+            },
+            pagos: { where: { estado: 'COMPLETADO' }, select: { id: true } },
+          },
+        },
+      },
     });
 
     if (!turno) {
@@ -123,7 +136,53 @@ export class TurnosService {
       espacios_libres: turno.capacidad - turno.cantidad_inscriptos,
       capacidad: turno.capacidad,
       estado: turno.estado,
+      inscriptos: turno.reservas.map((r) => ({
+        id: r.id,
+        nombre: r.paciente.usuario.nombre,
+        apellido: r.paciente.usuario.apellido,
+        estado: r.estado,
+        pagado: r.pagos.length > 0,
+      })),
     };
+  }
+
+  async obtenerResumenReservasMes(mes: number, anio: number) {
+    const primerDia = new Date(Date.UTC(anio, mes - 1, 1));
+    const primerDiaSiguienteMes = new Date(Date.UTC(anio, mes, 1));
+
+    const turnos = await this.prisma.turno.findMany({
+      where: {
+        fecha: { gte: primerDia, lt: primerDiaSiguienteMes },
+        cantidad_inscriptos: { gt: 0 },
+      },
+      include: {
+        tipoActividad: true,
+        reservas: {
+          where: { estado: { not: 'CANCELADA' } },
+          include: {
+            pagos: { where: { estado: 'COMPLETADO' }, select: { id: true } },
+          },
+        },
+      },
+      orderBy: [{ fecha: 'asc' }, { hora_inicio: 'asc' }],
+    });
+
+    return turnos.map((t) => {
+      const y = t.fecha.getUTCFullYear();
+      const m = String(t.fecha.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(t.fecha.getUTCDate()).padStart(2, '0');
+      const h = String(t.hora_inicio.getUTCHours()).padStart(2, '0');
+      const min = String(t.hora_inicio.getUTCMinutes()).padStart(2, '0');
+
+      return {
+        id: t.id,
+        date: `${y}-${m}-${d}`,
+        actividad: t.tipoActividad.nombre,
+        hora_inicio: `${h}:${min}`,
+        total_reservas: t.reservas.length,
+        pagados: t.reservas.filter((r) => r.pagos.length > 0).length,
+      };
+    });
   }
 
   async obtenerDiasDeTurnosDisponilbles(mes: number, anio: number): Promise<number[]> {

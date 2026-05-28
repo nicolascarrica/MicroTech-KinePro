@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import TurnoGrid from '@/components/turnos/TurnoGrid'
-import TurnoModal from '@/components/turnos/TurnoModal'
-import { getTurnosByFecha, getTurnoById } from '@/services/turnosService'
-import type { TurnoResumen, TurnoDetalle } from '@/types/turno'
+import { getTurnosByFecha, getReservasMes } from '@/services/turnosService'
+import type { TurnoResumen, TurnoEventoMes } from '@/types/turno'
 import CrearTurnoModal from '@/components/turnos/CrearTurnoModal'
 import { Plus } from 'lucide-react'
 import { useRequireRole } from '@/hooks/useAuth'
@@ -27,11 +26,17 @@ export default function TurnosPage() {
   const [fechaSeleccionada, setFechaSeleccionada] = useState<string | null>(obtenerFechaHoy())
   const [turnos, setTurnos] = useState<TurnoResumen[]>([])
   const [loadingTurnos, setLoadingTurnos] = useState(false)
-
-  const [turnoDetalle, setTurnoDetalle] = useState<TurnoDetalle | null>(null)
-  const [loadingDetalle, setLoadingDetalle] = useState(false)
-
   const [modalCrearAbierto, setModalCrearAbierto] = useState(false)
+  const [eventosCalendario, setEventosCalendario] = useState<TurnoEventoMes[]>([])
+
+  async function cargarEventosMes(mes: number, anio: number) {
+    try {
+      const data = await getReservasMes(mes, anio)
+      setEventosCalendario(data)
+    } catch {
+      setEventosCalendario([])
+    }
+  }
 
   async function handleFechaSelect(fecha: string) {
     setFechaSeleccionada(fecha)
@@ -46,26 +51,10 @@ export default function TurnosPage() {
   }
 
   useEffect(() => {
-    if (fechaSeleccionada) {
-      void handleFechaSelect(fechaSeleccionada)
-    }
+    if (fechaSeleccionada) void handleFechaSelect(fechaSeleccionada)
+    const hoy = new Date()
+    void cargarEventosMes(hoy.getMonth() + 1, hoy.getFullYear())
   }, [])
-
-  async function handleTurnoSelect(turno: TurnoResumen) {
-    setTurnoDetalle(null)
-    setLoadingDetalle(true)
-    try {
-      const detalle = await getTurnoById(turno.id)
-      setTurnoDetalle(detalle)
-    } finally {
-      setLoadingDetalle(false)
-    }
-  }
-
-  function handleCloseModal() {
-    setTurnoDetalle(null)
-    setLoadingDetalle(false)
-  }
 
   if (cargando) return <p className="p-6 text-slate-500">Cargando...</p>
   if (!autorizado) return null
@@ -89,6 +78,8 @@ export default function TurnosPage() {
             <CalendarioTurnos
               fechaSeleccionada={fechaSeleccionada}
               onFechaSelect={handleFechaSelect}
+              eventos={eventosCalendario}
+              onMesChange={cargarEventosMes}
             />
           </section>
 
@@ -97,18 +88,15 @@ export default function TurnosPage() {
               fecha={fechaSeleccionada}
               turnos={turnos}
               loading={loadingTurnos}
-              onTurnoSelect={handleTurnoSelect}
-              selectable={false}
+              onPagoRegistrado={() => {
+                if (!fechaSeleccionada) return
+                const [anio, mes] = fechaSeleccionada.split('-').map(Number)
+                void cargarEventosMes(mes, anio)
+              }}
             />
           </section>
         </div>
       </div>
-
-      <TurnoModal
-        turno={turnoDetalle}
-        loading={loadingDetalle}
-        onClose={handleCloseModal}
-      />
 
       <CrearTurnoModal
         abierto={modalCrearAbierto}

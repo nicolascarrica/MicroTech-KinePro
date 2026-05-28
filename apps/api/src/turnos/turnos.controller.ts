@@ -30,9 +30,18 @@ export class TurnosController {
   }
   @Public()
   @Get('dias-disponibles/:mes/:anio')
-  obtenerDiasDisponibles( @Param('mes', ParseIntPipe) mes: number, @Param('anio', ParseIntPipe) anio: number ) 
+  obtenerDiasDisponibles( @Param('mes', ParseIntPipe) mes: number, @Param('anio', ParseIntPipe) anio: number )
   {
     return this.turnosService.obtenerDiasDeTurnosDisponilbles(mes, anio);
+  }
+
+  @Roles('OWNER', 'ADMIN')
+  @Get('reservas-mes/:mes/:anio')
+  obtenerReservasMes(
+    @Param('mes', ParseIntPipe) mes: number,
+    @Param('anio', ParseIntPipe) anio: number,
+  ) {
+    return this.turnosService.obtenerResumenReservasMes(mes, anio);
   }
    
 }

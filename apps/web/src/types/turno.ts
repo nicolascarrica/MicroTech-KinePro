@@ -1,4 +1,13 @@
 export type EstadoTurno = 'DISPONIBLE' | 'RESERVADO' | 'CANCELADO'
+export type EstadoReserva = 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'ASISTIO' | 'AUSENTE'
+
+export interface Inscripto {
+  id: number
+  nombre: string
+  apellido: string
+  estado: EstadoReserva
+  pagado: boolean
+}
 
 export interface TurnoResumen {
   id: number
@@ -14,8 +23,10 @@ export interface TurnoDetalle {
   id: number
   horario: string
   actividad: string
+  capacidad: number
   reservasActuales: number
   espaciosLibres: number
+  inscriptos: Inscripto[]
 }
 
 export interface TurnoResumenConFecha extends TurnoResumen {
@@ -42,4 +53,13 @@ export interface RangoHorarioBackend {
   desde: string;
   hasta: string;
   actividades: Actividad[];
+}
+
+export interface TurnoEventoMes {
+  id: number
+  date: string       // YYYY-MM-DD
+  actividad: string
+  hora_inicio: string // HH:MM
+  total_reservas: number
+  pagados: number
 }
