@@ -53,11 +53,16 @@ export class AuthService {
       where: { id: usuarioIngresado.id },
       data: { intentosFallidos: 0 },
     });
-
+    
+    const paciente = await this.prisma.paciente.findUnique({
+    where: { usuario_id: usuarioIngresado.id },
+    select: { id: true }
+  });
 
     // Esto es para el toke, es info que va con el token
     const usuarioRegistrado = { 
       id: usuarioIngresado.id,
+      pacienteId: paciente ? paciente.id : null,
       dni: usuarioIngresado.dni, 
       email: usuarioIngresado.email,
       rol: usuarioIngresado.rol 

@@ -356,8 +356,6 @@ export class ReservaService {
 
   
   async crearReservaFija(pacienteId: number, turnoInicialId: number, fechasString: string[]) {
-   
-
 
 
     const turnoBase = await this.prisma.turno.findUnique({
