@@ -11,6 +11,8 @@ import { PagosModule } from './pagos/pagos.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
+import { MailService } from './mail/mail.service';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -23,6 +25,7 @@ import { RolesGuard } from './auth/roles.guard';
     TurnosModule,
     ReservaModule,
     PagosModule,
+    MailModule
   ],
   providers: [
     {
@@ -33,6 +36,7 @@ import { RolesGuard } from './auth/roles.guard';
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
+    MailService,
   ],
 })
 export class AppModule {}

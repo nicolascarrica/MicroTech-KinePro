@@ -131,85 +131,11 @@ export class UsuariosService {
     return { message: 'Modificacion de datos exitosa' };
   }
 
-  async iniciarSesion(dto: LoginDto) {
-    const usuarioIngresado = await this.prisma.usuario.findUnique({
-      where: { email: dto.email },
-    });
-
-    // Escenario 2: Fallido por email inexistente
-    if (!usuarioIngresado) {
-      throw new BadRequestException('Datos incorrectos');
-    }
-
-    // Escenario 5: Fallido por cuenta bloqueada
-    if (usuarioIngresado.bloqueado) {
-      throw new BadRequestException('La cuenta se encuentra bloqueada.');
-    }
-
-    //Escenario 3 y 4: Fallido por contraseña incorrecta
-    if (usuarioIngresado.contrasena !== dto.password) {
-      const nuevosIntentos = usuarioIngresado.intentosFallidos + 1;
-
-      await this.prisma.usuario.update({
-        where: { id: usuarioIngresado.id },
-        data: {
-          intentosFallidos: nuevosIntentos,
-        },
-      });
-
-      if (nuevosIntentos === 3) {
-        
-        const nuevoToken = crypto.randomBytes(4).toString('hex');
-        // Ejemplo: "a3t8c2e1"
-        await this.prisma.usuario.update({
-          where: { id: usuarioIngresado.id },
-          data: {
-            bloqueado: true,
-            token: nuevoToken,
-          },
-        });
-    
-        this.desbloquearCuentaEmail(nuevoToken);
-        throw new BadRequestException(
-          'Contraseña incorrecta. La cuenta fue bloqueada y se le envió un email al correo asociado para desbloquearla.'
-        );
-      }
-
-      throw new BadRequestException(
-        'Contraseña incorrecta, intente nuevamente.'
-      );
-    }
-  
-    //Escenario 1: Exitoso
-    await this.prisma.usuario.update({
-      where: { id: usuarioIngresado.id },
-      data: { intentosFallidos: 0 },
-    });
-    return { message: 'Inicio de sesión exitoso' };
-    //Va algo mas? iria algo que ejecute el inicio de sesion imagino.
-  }
-
   async desbloquearCuentaEmail(token: string) {
     const baseUrl = process.env.WEB_ORIGIN ?? 'http://localhost:3000';
     console.log(`Correo de desbloqueo. Enlace: ${baseUrl}/desbloqueo?token=${token}`);
   }
 
-  // Se ejecuta cuando el usuario haga click en el enlace 
-  async confirmarDesbloqueo(token: string) {
-    try {
-      await this.prisma.usuario.update({
-        where: { token: token },
-        data: {
-          bloqueado: false,
-          intentosFallidos: 0,
-          token: null,
-        },
-      });
-      return { message: 'Desbloqueo exitoso' };
-    } catch (error) {
-      throw new BadRequestException('El enlace de desbloqueo es inválido o ya expiró.');
-    }
-  }
  
   async cerrarSesion(dto: LogoutDto) {
     const usuarioLogueado = await this.prisma.usuario.findUnique({

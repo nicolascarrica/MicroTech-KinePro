@@ -15,17 +15,10 @@ export class UsuariosController {
   registrar(@Body() createPacienteDto: CreatePacienteDto) {
     return this.usuariosService.registrar(createPacienteDto);
   }
-
-
+  
   @Put('modificacion')
   modificar(@Body() UpdateUsuarioDto: UpdateUsuarioDto) {
     return this.usuariosService.modificar(UpdateUsuarioDto);
-  }
-
-  @Public() // Permite el acceso sin autenticación a esta ruta
-  @Post('inicio')
-  iniciar(@Body() LoginDto: LoginDto){
-    return this.usuariosService.iniciarSesion(LoginDto);
   }
 
   @Post('cierre')
@@ -52,11 +45,6 @@ export class UsuariosController {
     return this.usuariosService.restablecimientoContrasena(restoreContrasenaNuevaDto);
   } 
 
-  @Public() // Permite el acceso sin autenticación a esta ruta
-  @Put('desbloqueo') // Cambiado a PUT porque modifica un estado existente en la BD
-  desbloquear(@Body() unlockAccountDto: UnlockAccountDto){
-    return this.usuariosService.confirmarDesbloqueo(unlockAccountDto.token);
-  }
 
   @Roles('OWNER', 'ADMIN')
   @Get()

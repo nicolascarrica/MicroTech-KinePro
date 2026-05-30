@@ -7,6 +7,7 @@ import ProximosTurnosHome from '@/components/turnos/ProximosTurnosHome';
 import Ubicacion from '@/components/home/Ubicacion';
 import AcercaDe from '@/components/home/AcercaDe';
 import { useAuth } from '@/hooks/useAuth';
+import { Suspense } from 'react';
 
 export default function HomePage() {
   const { isAuthenticated, rol, cargando } = useAuth();

@@ -1,12 +1,16 @@
 'use client';
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { MailCheck } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+
 
 const SOLO_LETRAS = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s']+$/;
 const DNI_NUMERICO = /^\d{7,8}$/;
 const TELEFONO_NUMERICO = /^\d{8,15}$/;
+
 
 function validarRegistro(data: Record<string, FormDataEntryValue>): string | null {
   const nombre = String(data.nombre ?? '').trim();
@@ -30,19 +34,66 @@ function validarRegistro(data: Record<string, FormDataEntryValue>): string | nul
 }
 
 export default function Inicio() {
+  // --- 1. LOS HOOKS DE NEXT.JS TIENEN QUE IR ADENTRO DEL COMPONENTE ---
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const tokenUrl = searchParams.get('token');
+  const intentoDesbloqueo = useRef(false);
+
+  // --- 2. TUS ESTADOS ---
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isBloqueado, setIsBloqueado] = useState(false);
 
   // Estados para manejar la persistencia de sesión sin errores 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [cargando, setCargando] = useState(true);
 
+  // --- 3. EFECTOS (USEEFFECTS) ---
   useEffect(() => {
     const token = localStorage.getItem('kinepro_token');
     setIsAuthenticated(!!token);
     setCargando(false);
   }, []);
 
+  // Efecto para interceptar el token de la URL y desbloquear
+ useEffect(() => {
+    // Si hay token y todavía no intentamos desbloquear...
+    if (tokenUrl && !intentoDesbloqueo.current) {
+      intentoDesbloqueo.current = true; // Levantamos la bandera para que no se repita
+
+      const procesarDesbloqueo = async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/desbloquear?token=${tokenUrl}`);
+          const data = await res.json();
+
+          if (res.ok) {
+            toast.success('¡Cuenta desbloqueada!', {
+              description: 'Ya podés iniciar sesión normalmente.',
+              duration: 5000,
+            });
+            setIsBloqueado(false);
+            setIsLoginOpen(true); 
+          } else {
+            toast.error('Enlace inválido', {
+              description: data.message || 'El enlace ha expirado o no es válido.',
+              duration: 5000,
+            });
+          }
+        } catch (error) {
+          toast.error('Error', {
+            description: 'Ocurrió un problema al intentar desbloquear la cuenta.',
+          });
+        } finally {
+          router.replace('/');
+        }
+      };
+
+      procesarDesbloqueo();
+    }
+  }, [tokenUrl, router]);
+
+  // --- 4. TUS FUNCIONES MANEJADORAS ---
   async function manejarLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -76,7 +127,13 @@ export default function Inicio() {
       }, 1500);
     } catch (error: any) {
       console.error('Error en login:', error.message);
-      toast.error('Error al iniciar sesión', { description: error.message, duration: 5000 });
+      
+      // Manejo específico del bloqueo
+      if (error.message.includes('cuenta fue bloqueada')) {
+        setIsBloqueado(true);
+      } else {
+        toast.error('Error al iniciar sesión', { description: error.message, duration: 5000 });
+      }
     }
   }
 
@@ -155,22 +212,25 @@ export default function Inicio() {
           </div>
         </div>
 
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => { setIsRegisterOpen(true); }}
-              className="bg-white hover:bg-slate-50 text-teal-600 font-medium px-5 py-2.5 rounded-xl transition-all shadow-sm border border-slate-200"
-            >
-              Registrarse
-            </button>
-            <button
-              onClick={() => { setIsLoginOpen(true); }}
-              className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 py-2.5 rounded-xl transition-all shadow-sm"
-            >
-              Iniciar sesión
-            </button>
-          </div>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => { setIsRegisterOpen(true); }}
+            className="bg-white hover:bg-slate-50 text-teal-600 font-medium px-5 py-2.5 rounded-xl transition-all shadow-sm border border-slate-200"
+          >
+            Registrarse
+          </button>
+          <button
+            onClick={() => { 
+              setIsBloqueado(false); 
+              setIsLoginOpen(true); 
+            }}
+            className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-5 py-2.5 rounded-xl transition-all shadow-sm"
+          >
+            Iniciar sesión
+          </button>
+        </div>
       </section>
-
+              
       {/* LOGIN MODAL */}
       {isLoginOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
@@ -182,25 +242,62 @@ export default function Inicio() {
               ✕
             </button>
 
-            <h3 className="text-lg font-bold text-slate-800 mb-4">Iniciar sesión</h3>
+            {/* CONDICIONAL ANIMADO CON FRAMER MOTION */}
+            <AnimatePresence mode="wait">
+              {isBloqueado ? (
+                <motion.div
+                  key="mensaje-bloqueado"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="text-center py-6 px-2"
+                >
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-500">
+                    <MailCheck className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-800 mb-2">Revisá tu correo</h3>
+                  <p className="text-slate-600 mb-6 text-sm">
+                    Por seguridad, hemos bloqueado tu cuenta debido a múltiples intentos fallidos. 
+                    Te enviamos un enlace válido por 15 minutos para que puedas desbloquearla.
+                  </p>
+                  <button 
+                    onClick={() => setIsLoginOpen(false)} 
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2.5 rounded-xl transition-colors"
+                  >
+                    Entendido
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="formulario-login"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                >
+                  <h3 className="text-lg font-bold text-slate-800 mb-4">Iniciar sesión</h3>
+                  
+                  <form onSubmit={manejarLogin} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Correo electrónico</label>
+                      <input type="email" name="email" required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="ejemplo@kinepro.com" />
+                    </div>
 
-            <form onSubmit={manejarLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Correo electrónico</label>
-                <input type="email" name="email" required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="ejemplo@kinepro.com" />
-              </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+                      <input type="password" name="password" required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="••••••••" />
+                    </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
-                <input type="password" name="password" required className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:border-teal-500" placeholder="••••••••" />
-              </div>
+                    <p className="text-right text-sm">
+                      <Link href="/restablecer" onClick={() => setIsLoginOpen(false)} className="text-teal-600 hover:underline">¿Olvidaste tu contraseña?</Link>
+                    </p>
 
-              <p className="text-right text-sm">
-                <Link href="/restablecer" onClick={() => setIsLoginOpen(false)} className="text-teal-600 hover:underline">¿Olvidaste tu contraseña?</Link>
-              </p>
-
-              <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-xl transition-colors mt-2">Ingresar</button>
-            </form>
+                    <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-xl transition-colors mt-2">Ingresar</button>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       )}
