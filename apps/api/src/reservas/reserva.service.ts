@@ -768,20 +768,22 @@ export class ReservaService {
     const aplicaDescuento = ausencias < 2 && totalReprogramaciones < 2;
     const porcentajeDescuento = aplicaDescuento ? 20 : 0;
 
+    const reservaIds: number[] = [];
     //Escenario 6 
     try {
       await this.prisma.$transaction(async (tx) => {
         
-        // Armamos el array de datos para crear múltiples reservas en bloque
-        const reservasData = turnosIds.map(turnoId => ({
-          paciente_id: pacienteId,
-          turno_id: turnoId,
-          estado: EstadoReserva.CONFIRMADA, 
-        }));
-
-        await tx.reserva.createMany({
-          data: reservasData,
-        });
+        // Creamos cada reserva individualmente para poder capturar sus IDs
+        for (const turnoId of turnosIds) {
+          const r = await tx.reserva.create({
+            data: {
+              paciente_id: pacienteId,
+              turno_id: turnoId,
+              estado: EstadoReserva.CONFIRMADA,
+            },
+          });
+          reservaIds.push(r.id);
+        }
 
         // Actualizamos los inscriptos de los turnos seleccionados
         for (const turnoId of turnosIds) {
@@ -827,7 +829,8 @@ export class ReservaService {
       return {
         message: mensajeRespuesta,
         descuentoAplicado: `${porcentajeDescuento}%`,
-        cantidadTurnos: turnosIds.length
+        cantidadTurnos: turnosIds.length,
+        reservaIds
       };
 
     } catch (error) {

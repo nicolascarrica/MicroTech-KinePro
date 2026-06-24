@@ -5,7 +5,7 @@ export class CrearPagoDto {
   reserva_id!: number
 
   @IsEnum(['EFECTIVO', 'TARJETA'], {
-    message: 'El método de pago debe ser EFECTIVO o TARJETA',
+    message: 'Debe seleccionar un método de pago para continuar',
   })
   metodo!: 'EFECTIVO' | 'TARJETA'
 }
