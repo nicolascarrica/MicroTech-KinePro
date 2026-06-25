@@ -7,6 +7,7 @@ import {
   crearReservaPresencial,
   crearReservaFijaPresencial,
   cancelarReservaPresencial,
+  chequearDescuento,
 } from '@/services/reservasService'
 import ReprogramarReservaModal from '@/components/turnos/ReprogramarReservaModal'
 import { fechasMismoDiaSemana, parseFechaLocal } from '@/lib/fechas'
@@ -192,6 +193,7 @@ function DetalleInscriptos({ detalle, fecha, onReservaCreada }: { detalle: Turno
   const [cancelando, setCancelando] = useState(false)
   const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'TARJETA' | ''>('')
   const [pacientes, setPacientes] = useState<PacienteOption[]>([])
+  const [aplicaDescuento, setAplicaDescuento] = useState(false)
 
   useEffect(() => {
     if (!esAdmin) return
@@ -201,6 +203,17 @@ function DetalleInscriptos({ detalle, fecha, onReservaCreada }: { detalle: Turno
         toast.error('No se pudieron cargar los pacientes', { description: err.message })
       })
   }, [esAdmin])
+
+
+  useEffect(() => {
+    if (tipoReserva !== 'fijo' || !email) {
+      setAplicaDescuento(false)
+      return
+    }
+    chequearDescuento(email)
+      .then((res) => setAplicaDescuento(res.aplica))
+      .catch(() => setAplicaDescuento(false))
+  }, [email, tipoReserva])
 
   if (detalle.inscriptos.length === 0 && !esAdmin) {
     return <p className="text-xs text-neutral-gray">Sin inscriptos en este turno.</p>
@@ -286,11 +299,19 @@ function DetalleInscriptos({ detalle, fecha, onReservaCreada }: { detalle: Turno
       // 2. Registrar el pago de cada reserva creada
       const reservaIds: number[] = respuesta?.reservaIds ?? []
       if (reservaIds.length > 0) {
+        // Calculamos el monto por reserva (con descuento aplicado si corresponde)
+        const precioUnitario = detalle.precio ?? 0
+        const montoPorReserva = aplicaDescuento ? precioUnitario * 0.8 : precioUnitario
+      
         let pagosOk = 0
         let pagosFail = 0
         for (const rid of reservaIds) {
           try {
-            await registrarPago({ reserva_id: rid, metodo: metodoPago as 'EFECTIVO' | 'TARJETA' })
+            await registrarPago({
+              reserva_id: rid,
+              metodo: metodoPago as 'EFECTIVO' | 'TARJETA',
+              monto: montoPorReserva,
+            })
             pagosOk++
           } catch (e) {
             pagosFail++
@@ -425,20 +446,28 @@ function DetalleInscriptos({ detalle, fecha, onReservaCreada }: { detalle: Turno
               )
             }
           
-            // Modalidad fijo: calculamos cantidad de fechas en base a fechaFin
+            // Modalidad fijo
             let cantidadTurnos = 0
             if (fecha && fechaFin) {
               cantidadTurnos = calcularFechasFixas(fecha, fechaFin).length
             }
           
-            const total = precioUnitario * cantidadTurnos
+            const subtotal = precioUnitario * cantidadTurnos
+            const descuento = aplicaDescuento ? subtotal * 0.2 : 0
+            const total = subtotal - descuento
           
             return (
               <div className="mt-2 text-xs text-slate-600">
                 {cantidadTurnos > 0 ? (
                   <>
-                    Monto total a abonar: <span className="font-bold text-slate-800">${formatear(total)}</span>
-                    <span className="block text-slate-500">({cantidadTurnos} turnos × ${formatear(precioUnitario)})</span>
+                    <div>Subtotal: <span className="font-semibold text-slate-700">${formatear(subtotal)}</span> <span className="text-slate-500">({cantidadTurnos} turnos × ${formatear(precioUnitario)})</span></div>
+                    {aplicaDescuento && (
+                      <div className="text-emerald-700">Descuento 20%: -${formatear(descuento)}</div>
+                    )}
+                    <div className="mt-1">Total a cobrar: <span className="font-bold text-slate-800">${formatear(total)}</span></div>
+                    {!aplicaDescuento && email && (
+                      <div className="text-amber-700 mt-1">El paciente no califica para descuento (tiene ausencias o reprogramaciones).</div>
+                    )}
                   </>
                 ) : (
                   <>Monto total a abonar: <span className="font-bold text-slate-800">$-</span> <span className="text-slate-400">(ingresá una fecha de fin)</span></>

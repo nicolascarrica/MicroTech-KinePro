@@ -872,4 +872,40 @@ export class ReservaService {
     return this.crearReservaFija(usuario.paciente.id, turnoInicialId, fechasString);
   }
 
+  async chequearDescuento(email: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { email },
+      include: { paciente: true },
+    });
+  
+    if (!usuario || !usuario.paciente) {
+      throw new BadRequestException('El email no corresponde a un paciente registrado');
+    }
+  
+    const pacienteId = usuario.paciente.id;
+  
+    const ausencias = await this.prisma.reserva.count({
+      where: { paciente_id: pacienteId, estado: EstadoReserva.AUSENTE },
+    });
+  
+    const reservasConReprogramacion = await this.prisma.reserva.findMany({
+      where: { paciente_id: pacienteId, cant_reprogramaciones: { gt: 0 } },
+      select: { cant_reprogramaciones: true },
+    });
+  
+    const totalReprogramaciones = reservasConReprogramacion.reduce(
+      (acc, curr) => acc + curr.cant_reprogramaciones,
+      0,
+    );
+  
+    const aplica = ausencias < 2 && totalReprogramaciones < 2;
+  
+    return {
+      aplica,
+      porcentaje: aplica ? 20 : 0,
+      ausencias,
+      totalReprogramaciones,
+    };
+  }
+
 }
