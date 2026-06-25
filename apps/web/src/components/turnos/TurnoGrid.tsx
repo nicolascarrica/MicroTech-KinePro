@@ -10,6 +10,7 @@ import {
   chequearDescuento,
 } from '@/services/reservasService'
 import ReprogramarReservaModal from '@/components/turnos/ReprogramarReservaModal'
+import InfoDialog, { tituloYMensajeDesdeApi } from '@/app/Components/InfoDialog'
 import { fechasMismoDiaSemana, parseFechaLocal } from '@/lib/fechas'
 import { ChevronDown } from 'lucide-react'
 import type { TurnoResumen, TurnoDetalle, EstadoTurno } from '@/types/turno'
@@ -194,6 +195,7 @@ function DetalleInscriptos({ detalle, fecha, onReservaCreada }: { detalle: Turno
   const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'TARJETA' | ''>('')
   const [pacientes, setPacientes] = useState<PacienteOption[]>([])
   const [aplicaDescuento, setAplicaDescuento] = useState(false)
+  const [errorDialog, setErrorDialog] = useState<{ titulo: string; mensaje: string } | null>(null)
 
   useEffect(() => {
     if (!esAdmin) return
@@ -203,7 +205,6 @@ function DetalleInscriptos({ detalle, fecha, onReservaCreada }: { detalle: Turno
         toast.error('No se pudieron cargar los pacientes', { description: err.message })
       })
   }, [esAdmin])
-
 
   useEffect(() => {
     if (tipoReserva !== 'fijo' || !email) {
@@ -273,7 +274,13 @@ function DetalleInscriptos({ detalle, fecha, onReservaCreada }: { detalle: Turno
       setCancelarReservaId(null)
       if (onReservaCreada) await onReservaCreada()
     } catch (err: any) {
-      toast.error('No se pudo cancelar el turno', { description: err.message || String(err) })
+      const detalle = err?.message ?? 'Ocurrió un error inesperado. Intentá de nuevo.'
+      const parsed = tituloYMensajeDesdeApi(detalle)
+      setCancelarReservaId(null)
+      setErrorDialog({
+        titulo: parsed.mensaje ? parsed.titulo : 'No se pudo cancelar el turno',
+        mensaje: parsed.mensaje || detalle,
+      })
     } finally {
       setCancelando(false)
     }
@@ -371,6 +378,8 @@ function DetalleInscriptos({ detalle, fecha, onReservaCreada }: { detalle: Turno
         abierto={reprogramarReservaId !== null}
         reservaId={reprogramarReservaId}
         fechaActual={fecha}
+        tipoActividadId={detalle.tipoActividadId ?? null}
+        actividadNombre={detalle.actividad}
         presencial
         onClose={() => setReprogramarReservaId(null)}
         onReprogramado={() => {
@@ -502,6 +511,14 @@ function DetalleInscriptos({ detalle, fecha, onReservaCreada }: { detalle: Turno
           )}
         </div>
       )}
+
+      <InfoDialog
+        abierto={errorDialog !== null}
+        variante="error"
+        titulo={errorDialog?.titulo ?? ''}
+        mensaje={errorDialog?.mensaje}
+        onCerrar={() => setErrorDialog(null)}
+      />
     </div>
   )
 }

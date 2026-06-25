@@ -27,6 +27,7 @@ export interface TurnoDetalle {
   horario: string
   actividad: string
   precio: number
+  tipoActividadId: number
   capacidad: number
   reservasActuales: number
   espaciosLibres: number
